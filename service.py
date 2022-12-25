@@ -51,6 +51,14 @@ class ServiceStatus:
                 instance.bind_services.append(this_service_instance)
         return instance
 
+    def export(self) -> Dict[str, List[Dict]]:
+        ret_dict = {}
+        for i in Protocols.support_protocol:
+            ret_dict[i] = []
+            for j in self.bind_services:
+                ret_dict[i].append(j.export())
+        return ret_dict
+
 
 class ServiceStatusGroup:
     def __init__(self) -> None:
@@ -58,27 +66,19 @@ class ServiceStatusGroup:
 
     def bind_group(
         self,
-        service_status_instance: ServiceStatus,
         services: List[BaseProtocol],
         name: str,
     ):
         self.bind_services_group[name] = ServiceStatus()
         for this_service in services:
             self.bind_services_group[name].bind_service(this_service)
-            service_status_instance.unbind_service(this_service)
+            # service_status_instance.unbind_service(this_service) # 由NonebotPluginServiceStateManager实现
 
-    def bind_group_by_name(
-        self,
-        service_status_instance: ServiceStatus,
-        services_name: List[str],
-        name: str,
-    ):
-        service_instance_list: List[BaseProtocol] = []
-        for i in services_name:
-            service_instance_list.append(
-                service_status_instance.get_service_instance_by_name(i)
-            )
-        self.bind_group(service_status_instance, service_instance_list, name)
+    def unbind_group_by_name(self, unbind_service_group_name: str) -> bool:
+        if unbind_service_group_name not in self.bind_services_group:
+            return False
+        del self.bind_services_group[unbind_service_group_name]
+        return True
 
     async def get_detect_result(self) -> Dict[str, bool]:
         ret_result = {}
@@ -89,3 +89,18 @@ class ServiceStatusGroup:
                     ret_result[name] = False
                     break
         return ret_result
+
+    @classmethod
+    def load(cls, source: Dict[str, Dict[str, List]]) -> ServiceStatusGroup:
+        instance = cls()
+        for name, service_status_config in source.items():
+            instance.bind_services_group[name] = ServiceStatus.load(
+                service_status_config
+            )
+        return instance
+
+    def export(self) -> Dict[str, Dict[str, List]]:
+        ret_dict = {}
+        for name, service_status_instance in self.bind_services_group.items():
+            ret_dict[name] = service_status_instance.export()
+        return ret_dict

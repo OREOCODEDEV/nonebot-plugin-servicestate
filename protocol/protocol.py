@@ -1,14 +1,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, abstractclassmethod
-from network import detect_http
 from typing import Union, Dict, List
 
 
 class BaseProtocol(ABC):
     _support_protocol: dict = {}
     _PROTOCOL_NAME = None
+    _EXTEND_PARAMS: Dict[str, str] = {}
+    _REQUIRE_PARAMS: List[str] = []
 
-    def __init__(self, name: str, host: str, protocol_name: str, timeout=3) -> None:
+    def __init__(self, name: str, host: str, timeout=5) -> None:
         self.name: str = name
         self.host: str = host
         self.timeout: int = timeout
@@ -52,28 +53,5 @@ class BaseProtocol(ABC):
 class Protocols:
     @classmethod
     @property
-    def support_protocol(cls) -> List:
+    def support_protocol(cls) -> List[str]:
         return list(BaseProtocol._support_protocol.keys())
-
-    """
-    直接在下方拓展协议即可
-    """
-
-    class http(BaseProtocol):
-        _PROTOCOL_NAME = "HTTP"
-
-        def __init__(self, name: str, host: str) -> None:
-            super().__init__(name=name, host=host, protocol_name=self._PROTOCOL_NAME)
-            self.proxies: Union[str, None] = None
-
-        async def detect(self) -> bool:
-            return await detect_http(
-                host=self.host, proxies=self.proxies, timeout=self.timeout
-            )
-
-        @classmethod
-        def load(cls, source: Dict) -> Protocols.http:
-            instance = cls(source["name"], source["host"])
-            instance.timeout = source["timeout"]
-            instance.proxies = source.get("proxies", None)
-            return instance

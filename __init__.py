@@ -1,34 +1,49 @@
 import asyncio
-from service import ServiceStatus, ServiceStatusGroup
+from service import ServiceStatus, ServiceStatusGroup, BaseProtocol, Protocols
 from typing import Dict, List, Any
 from exception import NameConflictException, BindFailedException
+from pathlib import Path
+import json
 
-config = {
-    "HTTP": [
-        {"name": "会战面板", "host": "https://524266386o.eicp.vip/yobot/", "timeout": 5},
-        {"name": "映射状态", "host": "http://103.46.128.44", "timeout": 5},
-        {"name": "涩图API", "host": "http://api.lolicon.app", "timeout": 5},
-        {"name": "涩图图床", "host": "http://i.pixiv.re", "timeout": 5},
-    ]
-}
+CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
 
 
 class NonebotPluginServiceStateManager:
-    __service_status: ServiceStatus = None
-    __service_status_group: ServiceStatusGroup = None
+    __service_status: ServiceStatus = ServiceStatus()
+    __service_status_group: ServiceStatusGroup = ServiceStatusGroup()
 
     def __init__(self) -> None:
         pass
 
-    def load(self):
-        self.__service_status = ServiceStatus.load(config)
-        self.__service_status_group = ServiceStatusGroup()
-        print(self.__service_status.bind_service)
+    def load(self, path: Path):
+        with open(path, "r", encoding="utf-8") as f:
+            load_dict = json.loads(f.read())
+        print(type(load_dict))
+        self.__service_status = ServiceStatus.load(load_dict["service"])
+        self.__service_status_group = ServiceStatusGroup.load(
+            load_dict["service_group"]
+        )
+
+    def save(self, path: Path):
+        save_dict = {
+            "service": self.__service_status.export(),
+            "service_group": self.__service_status_group.export(),
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(save_dict))
+
+    def bind_new_service(self, service: BaseProtocol):
+        self.__service_status.bind_service(service)
 
     def bind_group_by_name(self, service_name_list: List[str], name: str):
-        self.__service_status_group.bind_group_by_name(
-            self.__service_status, service_name_list, name
-        )
+        service_instance_list: List[BaseProtocol] = []
+        for i in service_name_list:
+            service_instance_list.append(
+                self.__service_status.get_service_instance_by_name(i)
+            )
+        self.__service_status_group.bind_group(service_instance_list, name)
+        for i in service_instance_list:
+            self.__service_status.unbind_service(i)
 
     async def get_detect_result(self):
         return dict(
@@ -43,22 +58,29 @@ class NonebotPluginServiceStateManager:
             pretty_text += "O" if result else "X"
             pretty_text += "" if result else " "  # QQ字符O和X宽度不一致
             pretty_text += " "
-            pretty_text += "可用" if result else "故障"
+            pretty_text += "正常" if result else "故障"
             pretty_text += " | "
             pretty_text += name
             pretty_text += "\n"
         pretty_text = pretty_text[:-1]
         return pretty_text
 
+    def debug(self):
+        print(self.__service_status.export())
+        print(self.__service_status_group.export())
 
-demo = NonebotPluginServiceStateManager()
+
+manager = NonebotPluginServiceStateManager()
 
 
 async def demo_test():
-    demo.load()
-    print(await demo.get_detect_result_text())
-    demo.bind_group_by_name(["涩图API", "涩图图床"], "涩图")
-    print(await demo.get_detect_result_text())
+    manager.load(CONFIG_FILE_PATH)
+    manager.debug()
+    print(await manager.get_detect_result_text())
+    print("=" * 20)
+    # manager.bind_group_by_name(["涩图API", "涩图图床"], "涩图")
+    print(await manager.get_detect_result_text())
+    # manager.save(CONFIG_FILE_PATH)
 
 
 asyncio.run(demo_test())
