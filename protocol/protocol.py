@@ -50,8 +50,5 @@ class BaseProtocol(ABC):
         pass
 
 
-class Protocols:
-    @classmethod
-    @property
-    def support_protocol(cls) -> List[str]:
-        return list(BaseProtocol._support_protocol.keys())
+def support_protocol() -> List[str]:
+    return list(BaseProtocol._support_protocol.keys())

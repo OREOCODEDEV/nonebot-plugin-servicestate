@@ -3,6 +3,8 @@ from httpx import AsyncClient
 from typing import Union, Dict, List
 from .protocol import BaseProtocol
 
+from nonebot.log import logger
+
 
 class HTTP_Protocol(BaseProtocol):
     _PROTOCOL_NAME = "HTTP"
@@ -19,6 +21,7 @@ class HTTP_Protocol(BaseProtocol):
             follow_redirects=True,
             timeout=self.timeout,
         ) as client:
+            logger.debug(f"GET -> {self.host}")
             try:
                 respond = await client.get(url=self.host)
             except:

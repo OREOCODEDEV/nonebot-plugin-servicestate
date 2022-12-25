@@ -1,13 +1,13 @@
-class NameConflictException(Exception):
+class UnsupportedProtocolError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 
-class BindFailedException(Exception):
+class NameConflictError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 
-class ParamsIncorrectException(Exception):
+class NameNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)

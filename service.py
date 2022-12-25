@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Union, Dict, List, Any
 from asyncio import gather
-from protocol import BaseProtocol, Protocols
+from .protocol import BaseProtocol, support_protocol
+from .exception import NameNotFoundError, UnsupportedProtocolError
 
 
 class ServiceStatus:
@@ -12,7 +13,7 @@ class ServiceStatus:
         for i in self.bind_services:
             if name == i.name:
                 return i
-        raise ValueError("Unable find service instance!")
+        raise NameNotFoundError
 
     def bind_service(self, service: BaseProtocol):
         self.bind_services.append(service)
@@ -42,8 +43,8 @@ class ServiceStatus:
     def load(cls, source: Dict[str, List]) -> ServiceStatus:
         instance = cls()
         for key, value in source.items():
-            if key not in Protocols.support_protocol:
-                raise ValueError(f"Unsopported protocol: {key} !")
+            if key not in support_protocol():
+                raise UnsupportedProtocolError(f"Unsopported protocol: {key} !")
             for this_service_config in value:
                 this_service_instance = BaseProtocol._support_protocol[key].load(
                     this_service_config
@@ -53,7 +54,7 @@ class ServiceStatus:
 
     def export(self) -> Dict[str, List[Dict]]:
         ret_dict = {}
-        for i in Protocols.support_protocol:
+        for i in support_protocol():
             ret_dict[i] = []
             for j in self.bind_services:
                 ret_dict[i].append(j.export())
