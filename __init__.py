@@ -47,6 +47,7 @@ async def demo_test():
     text += "\n"
     text += nonebot_pretty_output(result_group)
     print(text)
+    print(service_status.bind_services[0].export())
 
 
 asyncio.run(demo_test())
