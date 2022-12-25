@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod, abstractclassmethod
 from network import detect_http
 from typing import Union, Dict, List
 
+
 class BaseProtocol(ABC):
     _support_protocol: dict = {}
     _PROTOCOL_NAME = None
@@ -18,9 +19,7 @@ class BaseProtocol(ABC):
                 raise NotImplementedError('Protocol should have "_PROTOCOL_NAME"')
             if this_subclass._PROTOCOL_NAME in BaseProtocol._support_protocol:
                 continue
-            BaseProtocol._support_protocol[
-                this_subclass._PROTOCOL_NAME
-            ] = this_subclass
+            BaseProtocol._support_protocol[this_subclass._PROTOCOL_NAME] = this_subclass
         return super().__init_subclass__()
 
     def __eq__(self, __o: BaseProtocol) -> bool:
@@ -36,9 +35,14 @@ class BaseProtocol(ABC):
     async def detect(self):
         pass
 
-    @abstractmethod
     def export(self):
-        pass
+        export_dict = self.__dict__
+        return_dict = {}
+        for key, value in export_dict.items():
+            if key.endswith("_") or key.startswith("_"):
+                continue
+            return_dict[key] = value
+        return return_dict
 
     @abstractclassmethod
     def load(cls):
@@ -51,6 +55,10 @@ class Protocols:
     def support_protocol(cls) -> List:
         return list(BaseProtocol._support_protocol.keys())
 
+    """
+    直接在下方拓展协议即可
+    """
+
     class http(BaseProtocol):
         _PROTOCOL_NAME = "HTTP"
 
@@ -62,14 +70,6 @@ class Protocols:
             return await detect_http(
                 host=self.host, proxies=self.proxies, timeout=self.timeout
             )
-
-        def export(self) -> Dict[str, Union[str, int, None]]:
-            result_dict = {}
-            result_dict["name"] = self.name
-            result_dict["host"] = self.host
-            result_dict["timeout"] = self.timeout
-            result_dict["proxies"] = self.proxies
-            return result_dict
 
         @classmethod
         def load(cls, source: Dict) -> Protocols.http:
