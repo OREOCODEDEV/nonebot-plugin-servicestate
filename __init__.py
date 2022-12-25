@@ -1,6 +1,6 @@
 import asyncio
 from service import ServiceStatus, ServiceStatusGroup
-from typing import Union, Dict, List, Any
+from typing import Dict, List, Any
 
 
 def nonebot_pretty_output(result_dict: Dict) -> str:

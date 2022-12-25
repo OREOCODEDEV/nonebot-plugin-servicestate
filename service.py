@@ -161,10 +161,7 @@ class ServiceStatusGroup:
         ret_result = {}
         for name, this_service_group in self.bind_services_group.items():
             ret_result[name] = True
-            temp_result = await this_service_group.get_detect_result()
-            print(temp_result)
-            temp_result = temp_result.values()
-            for i in temp_result:
+            for i in (await this_service_group.get_detect_result()).values():
                 if not i:
                     ret_result[name] = False
                     break
