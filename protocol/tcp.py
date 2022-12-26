@@ -27,4 +27,6 @@ class TCP_Protocol(BaseProtocol):
         instance = cls(source["name"], source["host"])
         instance.timeout = source.get("timeout", 5)
         instance.port = source.get("port", 80)
+        if not isinstance(instance.port, int):
+            instance.port = int(instance.port)
         return instance

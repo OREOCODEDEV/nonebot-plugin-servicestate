@@ -193,6 +193,8 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     manager.save(CONFIG_FILE_PATH)
     try:
         for key, value in settings_list:
+            if value == "None" or value == "空":
+                value = None
             manager.modify_service_param(name, key, value)
     except NameNotFoundError:
         manager.load(CONFIG_FILE_PATH)
@@ -205,3 +207,12 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
         await service_set_matcher.finish("操作失败：内部错误")
     manager.save(CONFIG_FILE_PATH)
     await service_set_matcher.finish(f"服务 {name} 参数修改成功")
+
+
+reload_config_matcher = on_command("服务状态载入配置")
+
+
+@reload_config_matcher.handle()
+async def _():
+    manager.load(CONFIG_FILE_PATH)
+    await reload_config_matcher.finish("已重新载入服务状态配置")
