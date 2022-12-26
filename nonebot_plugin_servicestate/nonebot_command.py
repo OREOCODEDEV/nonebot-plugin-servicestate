@@ -5,6 +5,7 @@ from nonebot.plugin.on import on_command
 from nonebot.params import CommandArg, Depends
 from nonebot.adapters.onebot.v11 import Message
 from nonebot.log import logger
+from nonebot.permission import SUPERUSER
 
 from .service import support_protocol
 from .exception import (
@@ -32,7 +33,8 @@ def extract_str_list(command_arg: Message = CommandArg()):
 
 
 service_add_matcher = on_command(
-    "监控服务新增", aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"}
+    "监控服务新增", aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"},
+    permission=SUPERUSER
 )
 
 
@@ -55,7 +57,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     await service_add_matcher.finish(f"{protocol} 协议绑定成功")
 
 
-service_del_matcher = on_command("监控服务删除", aliases={"删除监控服务"})
+service_del_matcher = on_command("监控服务删除", aliases={"删除监控服务"}, permission=SUPERUSER)
 
 
 @service_del_matcher.handle()
@@ -68,7 +70,7 @@ async def _(command_arg: Message = CommandArg()):
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
-service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务", "群组监控服务"})
+service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务", "群组监控服务"}, permission=SUPERUSER)
 
 
 @service_group_matcher.handle()
@@ -82,10 +84,10 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     except NameNotFoundError:
         await service_group_matcher.finish("操作失败：合并的服务名称中有一个或多个无法找到！")
     manager.save(CONFIG_FILE_PATH)
-    await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)+1} 个服务")
+    await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
 
 
-service_set_matcher = on_command("监控服务修改", aliases={"修改监控服务"})
+service_set_matcher = on_command("监控服务修改", aliases={"修改监控服务"}, permission=SUPERUSER)
 
 
 @service_set_matcher.handle()
@@ -119,7 +121,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     await service_set_matcher.finish(f"服务 {name} 参数修改成功")
 
 
-reload_config_matcher = on_command("服务状态载入配置")
+reload_config_matcher = on_command("服务状态载入配置", permission=SUPERUSER)
 
 
 @reload_config_matcher.handle()
