@@ -16,10 +16,11 @@ class TCP_Protocol(BaseProtocol):
 
     async def detect(self) -> bool:
         try:
-            logger.debug(f"TCP -> {self.host}:{self.port}")
             await asyncio.open_connection(self.host, self.port)
+            logger.debug(f"TCP -> {self.host}:{self.port} OK")
             return True
         except:
+            logger.debug(f"TCP -> {self.host}:{self.port} FAIL")
             return False
 
     @classmethod

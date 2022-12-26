@@ -21,15 +21,18 @@ class HTTP_Protocol(BaseProtocol):
             follow_redirects=True,
             timeout=self.timeout,
         ) as client:
-            logger.debug(f"GET -> {self.host}")
             try:
                 respond = await client.get(url=self.host)
             except:
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
             if not respond:
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
             if respond.status_code != 200:
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
+            logger.debug(f"GET -> {self.host} OK")
             return True
 
     @classmethod

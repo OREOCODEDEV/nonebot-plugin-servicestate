@@ -167,6 +167,8 @@ service_group_matcher = on_command("监控服务合并", aliases={"合并监控�
 
 @service_group_matcher.handle()
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
+    if len(command_arg_list) < 3:
+        await service_group_matcher.finish(f"参数不足\n合并监控服务 <名称1> <名称2> <群组名称>")
     bind_service_name_list = command_arg_list[:-1]
     name = command_arg_list[-1]
     try:
@@ -174,7 +176,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     except NameNotFoundError:
         await service_group_matcher.finish("操作失败：合并的服务名称中有一个或多个无法找到！")
     manager.save(CONFIG_FILE_PATH)
-    await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
+    await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)+1} 个服务")
 
 
 service_set_matcher = on_command("监控服务修改", aliases={"修改监控服务"})
@@ -182,6 +184,8 @@ service_set_matcher = on_command("监控服务修改", aliases={"修改监控服
 
 @service_set_matcher.handle()
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
+    if len(command_arg_list) < 3:
+        await service_group_matcher.finish(f"参数不足\n修改监控服务 <名称> <参数> <值>")
     name = command_arg_list[0]
     command_arg_list = command_arg_list[1:]
     if len(command_arg_list) % 2 != 0:
@@ -189,7 +193,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     settings_list: List[Tuple[str, str]] = []
     for i in range(0, len(command_arg_list) - 1, 2):
         settings_list.append((command_arg_list[i], command_arg_list[i + 1]))
-    logger.debug(f"Modifying settings: {settings_list}")
+    logger.debug(f"Modifying settings: {name} @ {settings_list}")
     manager.save(CONFIG_FILE_PATH)
     try:
         for key, value in settings_list:
