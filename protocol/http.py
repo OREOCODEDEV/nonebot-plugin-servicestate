@@ -37,4 +37,6 @@ class HTTP_Protocol(BaseProtocol):
         instance = cls(source["name"], source["host"])
         instance.timeout = source.get("timeout", 5)
         instance.proxies = source.get("proxies", None)
+        if not isinstance(instance.timeout, int):
+            instance.timeout = int(instance.timeout)
         return instance

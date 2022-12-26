@@ -1,1 +1,1 @@
-{"service": {"HTTP": [{"name": "\u4f1a\u6218\u9762\u677f", "host": "https://524266386o.eicp.vip/yobot/", "timeout": 5, "proxies": null}]}, "service_group": {"\u6da9\u56fe": {"HTTP": [{"name": "\u6da9\u56feAPI", "host": "http://api.lolicon.app", "timeout": 5, "proxies": null}, {"name": "\u6da9\u56fe\u56fe\u5e8a", "host": "http://i.pixiv.re", "timeout": 5, "proxies": null}]}}}
+{"service": {"HTTP": [], "TCP": []}, "service_group": {}}

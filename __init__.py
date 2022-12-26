@@ -1,13 +1,19 @@
 from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, support_protocol
-from .exception import UnsupportedProtocolError, NameConflictError, NameNotFoundError
-from typing import Dict, List, Any
+from .exception import (
+    UnsupportedProtocolError,
+    NameConflictError,
+    NameNotFoundError,
+    ConfigError,
+)
+from typing import Dict, List, Any, Tuple
 from pathlib import Path
 import json
 
 
 from nonebot.plugin.on import on_command
-from nonebot.params import CommandArg
+from nonebot.params import CommandArg, Depends
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
+from nonebot.log import logger
 
 CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
 
@@ -48,10 +54,10 @@ class NonebotPluginServiceStateManager:
         )
 
     def unbind_service_by_name(self, name: str):
-        if name in self.__service_status.bind_services:
+        if name in self.__service_status:
             self.__service_status.unbind_service_by_name(name)
             return
-        if name in self.__service_status_group.bind_services_group:
+        if name in self.__service_status_group:
             self.__service_status_group.unbind_group_by_name(name)
             return
         raise NameNotFoundError
@@ -66,6 +72,17 @@ class NonebotPluginServiceStateManager:
         for i in service_instance_list:
             self.__service_status.unbind_service(i)
 
+    def modify_service_param(self, name: str, key: str, value: str):
+        for i, j in enumerate(self.__service_status.bind_services):
+            if j.name == name:
+                temp_config = j.export()
+                if key not in temp_config:
+                    raise ConfigError
+                temp_config[key] = value
+                self.__service_status.bind_services[i] = j.load(temp_config)
+                return
+        raise NameNotFoundError
+
     async def get_detect_result(self):
         return dict(
             (await self.__service_status.get_detect_result()),
@@ -74,6 +91,8 @@ class NonebotPluginServiceStateManager:
 
     async def get_detect_result_text(self) -> str:
         result_dict = await self.get_detect_result()
+        if result_dict == {}:
+            return "您未绑定任何监控的服务！"
         pretty_text = ""
         for name, result in result_dict.items():
             pretty_text += "O" if result else "X"
@@ -102,13 +121,17 @@ async def _():
     await service_status_matcher.finish(await manager.get_detect_result_text())
 
 
-service_add_matcher = on_command("监控服务新增")
+def extract_str_list(command_arg: Message = CommandArg()):
+    return command_arg.extract_plain_text().split()
+
+
+service_add_matcher = on_command(
+    "监控服务新增", aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"}
+)
 
 
 @service_add_matcher.handle()
-async def _(command_arg: Message = CommandArg()):
-    command_arg_str = command_arg.extract_plain_text()
-    command_arg_list = command_arg_str.split()
+async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     if len(command_arg_list) < 3:
         await service_add_matcher.finish(f"参数不足\n监控服务新增 <协议> <名称> <地址>")
     protocol = command_arg_list[0]
@@ -126,7 +149,7 @@ async def _(command_arg: Message = CommandArg()):
     await service_add_matcher.finish(f"{protocol} 协议绑定成功")
 
 
-service_del_matcher = on_command("监控服务删除")
+service_del_matcher = on_command("监控服务删除", aliases={"删除监控服务"})
 
 
 @service_del_matcher.handle()
@@ -139,13 +162,11 @@ async def _(command_arg: Message = CommandArg()):
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
-service_group_matcher = on_command("监控服务合并")
+service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务"})
 
 
 @service_group_matcher.handle()
-async def _(command_arg: Message = CommandArg()):
-    command_arg_str = command_arg.extract_plain_text()
-    command_arg_list = command_arg_str.split()
+async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     bind_service_name_list = command_arg_list[:-1]
     name = command_arg_list[-1]
     try:
@@ -154,3 +175,33 @@ async def _(command_arg: Message = CommandArg()):
         await service_group_matcher.finish("操作失败：合并的服务名称中有一个或多个无法找到！")
     manager.save(CONFIG_FILE_PATH)
     await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
+
+
+service_set_matcher = on_command("监控服务修改", aliases={"修改监控服务"})
+
+
+@service_set_matcher.handle()
+async def _(command_arg_list: List[str] = Depends(extract_str_list)):
+    name = command_arg_list[0]
+    command_arg_list = command_arg_list[1:]
+    if len(command_arg_list) % 2 != 0:
+        await service_set_matcher.finish("操作失败：修改的参数需成对以 <参数名> <值> 方法提供")
+    settings_list: List[Tuple[str, str]] = []
+    for i in range(0, len(command_arg_list) - 1, 2):
+        settings_list.append((command_arg_list[i], command_arg_list[i + 1]))
+    logger.debug(f"Modifying settings: {settings_list}")
+    manager.save(CONFIG_FILE_PATH)
+    try:
+        for key, value in settings_list:
+            manager.modify_service_param(name, key, value)
+    except NameNotFoundError:
+        manager.load(CONFIG_FILE_PATH)
+        await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
+    except ConfigError:
+        manager.load(CONFIG_FILE_PATH)
+        await service_set_matcher.finish("操作失败：参数格式不正确")
+    except:
+        manager.load(CONFIG_FILE_PATH)
+        await service_set_matcher.finish("操作失败：内部错误")
+    manager.save(CONFIG_FILE_PATH)
+    await service_set_matcher.finish(f"服务 {name} 参数修改成功")

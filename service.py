@@ -10,13 +10,12 @@ class ServiceStatus:
         self.bind_services: List[BaseProtocol] = []
 
     def __contains__(self, item):
-        if item in self.bind_services:
-            return True
-        if not isinstance(item, BaseProtocol):
-            return False
-        for i in self.bind_services:
-            if i == item:
-                return True
+        if isinstance(item, str):
+            for i in self.bind_services:
+                if i.name == item:
+                    return True
+        if isinstance(item, BaseProtocol):
+            return item in self.bind_services
         return False
 
     def get_service_instance_by_name(self, name: str) -> BaseProtocol:
@@ -77,12 +76,10 @@ class ServiceStatusGroup:
         self.bind_services_group: Dict[str, ServiceStatus] = {}
 
     def __contains__(self, item):
-        if item in self.bind_services_group:
-            return True
-        if not isinstance(item, ServiceStatus):
-            return False
-        if item in self.bind_services_group.keys():
-            return True
+        if isinstance(item, str):
+            return item in self.bind_services_group.keys()
+        if isinstance(item, ServiceStatus):
+            return item in self.bind_services_group.values()
         return False
 
     def bind_group(
