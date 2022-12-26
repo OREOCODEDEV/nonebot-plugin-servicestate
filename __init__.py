@@ -39,20 +39,18 @@ class NonebotPluginServiceStateManager:
     def bind_new_service(self, protocol: str, name: str, host: str):
         if protocol not in support_protocol():
             raise UnsupportedProtocolError
-        for i in self.__service_status.bind_services:
-            if i.name == name:
-                raise NameConflictError
-        if name in self.__service_status_group.bind_services_group:
+        if name in self.__service_status:
+            raise NameConflictError
+        if name in self.__service_status_group:
             raise NameConflictError
         self.__service_status.bind_service(
             BaseProtocol._support_protocol[protocol](name=name, host=host)
         )
 
     def unbind_service_by_name(self, name: str):
-        for i in self.__service_status.bind_services:
-            if i.name == name:
-                self.__service_status.unbind_service(i)
-                return
+        if name in self.__service_status.bind_services:
+            self.__service_status.unbind_service_by_name(name)
+            return
         if name in self.__service_status_group.bind_services_group:
             self.__service_status_group.unbind_group_by_name(name)
             return

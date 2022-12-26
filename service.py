@@ -9,6 +9,16 @@ class ServiceStatus:
     def __init__(self) -> None:
         self.bind_services: List[BaseProtocol] = []
 
+    def __contains__(self, item):
+        if item in self.bind_services:
+            return True
+        if not isinstance(item, BaseProtocol):
+            return False
+        for i in self.bind_services:
+            if i == item:
+                return True
+        return False
+
     def get_service_instance_by_name(self, name: str) -> BaseProtocol:
         for i in self.bind_services:
             if name == i.name:
@@ -18,18 +28,19 @@ class ServiceStatus:
     def bind_service(self, service: BaseProtocol):
         self.bind_services.append(service)
 
-    def unbind_service(self, unbind_service: BaseProtocol) -> bool:
-        for this_service in self.bind_services:
-            if this_service == unbind_service:
-                self.bind_services.pop(self.bind_services.index(this_service))
-                return True
-        return False
+    def unbind_service(self, unbind_service: BaseProtocol):
+        if unbind_service not in self:
+            raise NameNotFoundError
+        self.bind_services.pop(
+            self.bind_services.index(
+                self.get_service_instance_by_name(unbind_service.name)
+            )
+        )
 
-    def unbind_service_by_name(self, unbind_service_name: str) -> bool:
+    def unbind_service_by_name(self, unbind_service_name: str):
         service_instance = self.get_service_instance_by_name(unbind_service_name)
         if service_instance is not None:
-            return self.unbind_service(service_instance)
-        return False
+            self.unbind_service(service_instance)
 
     async def get_detect_result(self) -> Dict[str, bool]:
         tasks = [service.detect() for service in self.bind_services]
@@ -65,6 +76,15 @@ class ServiceStatusGroup:
     def __init__(self) -> None:
         self.bind_services_group: Dict[str, ServiceStatus] = {}
 
+    def __contains__(self, item):
+        if item in self.bind_services_group:
+            return True
+        if not isinstance(item, ServiceStatus):
+            return False
+        if item in self.bind_services_group.keys():
+            return True
+        return False
+
     def bind_group(
         self,
         services: List[BaseProtocol],
@@ -75,11 +95,10 @@ class ServiceStatusGroup:
             self.bind_services_group[name].bind_service(this_service)
             # service_status_instance.unbind_service(this_service) # 由NonebotPluginServiceStateManager实现
 
-    def unbind_group_by_name(self, unbind_service_group_name: str) -> bool:
+    def unbind_group_by_name(self, unbind_service_group_name: str):
         if unbind_service_group_name not in self.bind_services_group:
-            return False
+            raise NameNotFoundError
         del self.bind_services_group[unbind_service_group_name]
-        return True
 
     async def get_detect_result(self) -> Dict[str, bool]:
         ret_result = {}
