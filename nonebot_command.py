@@ -22,10 +22,6 @@ CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
 manager = NonebotPluginServiceStateManager()
 manager.load(CONFIG_FILE_PATH)
 
-def _():
-    manager.load(CONFIG_FILE_PATH)
-
-manager.load(CONFIG_FILE_PATH)
 
 service_status_matcher = on_command("服务状态")
 
@@ -76,7 +72,7 @@ async def _(command_arg: Message = CommandArg()):
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
-service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务"})
+service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务", "群组监控服务"})
 
 
 @service_group_matcher.handle()
