@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Union, Dict, List
-from .protocol import BaseProtocol
 
+from typing import Union, Dict, List
 import random
+
+from .protocol import BaseProtocol
 
 
 class HTTP_Protocol(BaseProtocol):
