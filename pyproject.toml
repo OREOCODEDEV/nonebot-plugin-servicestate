@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-servicestate"
-version = "0.0.3"
+version = "0.0.4"
 description = "基于NoneBot2的状态监测插件"
 authors = ["OREOCODEDEV <17620745509@126.COM>"]
 license = "MIT"
@@ -19,6 +19,7 @@ python = "^3.8"
 httpx = "^0.20.0"
 nonebot2 = "^2.0.0b2"
 nonebot-adapter-onebot = "^2.1.0"
+pydantic = "^1.10.2"
 
 
 [build-system]
