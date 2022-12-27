@@ -15,11 +15,7 @@ from .exception import (
     NameNotFoundError,
     ParamCountInvalidError,
 )
-from .manager import CommandManager
-
-CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
-manager = CommandManager()
-manager.load(CONFIG_FILE_PATH)
+from .manager import manager, CONFIG_FILE_PATH
 
 service_status_matcher = on_command("服务状态")
 
@@ -28,11 +24,11 @@ service_status_matcher = on_command("服务状态")
 async def _():
     result_dict = await manager.get_detect_result()
     if result_dict == {}:
-        await service_status_matcher.finish("您未绑定任何监控的服务！")
+        await service_status_matcher.finish("您未绑定任何服务！")
     pretty_text = ""
     for name, result in result_dict.items():
         pretty_text += "O" if result else "X"
-        # pretty_text += "" if result else " "  # QQ字符O和X宽度不一致
+        pretty_text += "" if result else " "  # QQ字符O和X宽度不一致
         pretty_text += " "
         pretty_text += "正常" if result else "故障"
         pretty_text += " | "
@@ -47,8 +43,8 @@ def extract_str_list(command_arg: Message = CommandArg()):
 
 
 service_add_matcher = on_command(
-    "监控服务新增",
-    aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"},
+    "添加服务",
+    aliases={"服务添加", "服务增加", "服务新增", "增加服务", "新增服务"},
     permission=SUPERUSER,
 )
 
@@ -56,7 +52,7 @@ service_add_matcher = on_command(
 @service_add_matcher.handle()
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     if len(command_arg_list) < 3:
-        await service_add_matcher.finish(f"参数不足\n监控服务新增 <协议> <名称> <地址>")
+        await service_add_matcher.finish(f"参数不足\n添加服务 <协议> <名称> <地址>")
     protocol = command_arg_list[0]
     name = command_arg_list[1]
     host = command_arg_list[2]
@@ -67,12 +63,12 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
             f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(support_protocol())}"
         )
     except NameConflictError:
-        await service_add_matcher.finish("服务名称冲突！\n请修改新增服务名称或移除同名服务监控后再试")
+        await service_add_matcher.finish("服务名称冲突！\n请修改新增服务名称或移除同名服务后再试")
     manager.save(CONFIG_FILE_PATH)
     await service_add_matcher.finish(f"{protocol} 协议绑定成功")
 
 
-service_del_matcher = on_command("监控服务删除", aliases={"删除监控服务"}, permission=SUPERUSER)
+service_del_matcher = on_command("服务删除", aliases={"删除服务"}, permission=SUPERUSER)
 
 
 @service_del_matcher.handle()
@@ -86,14 +82,14 @@ async def _(command_arg: Message = CommandArg()):
 
 
 service_group_matcher = on_command(
-    "监控服务合并", aliases={"合并监控服务", "群组监控服务"}, permission=SUPERUSER
+    "服务合并", aliases={"合并服务", "群组服务","服务群组"}, permission=SUPERUSER
 )
 
 
 @service_group_matcher.handle()
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     if len(command_arg_list) < 3:
-        await service_group_matcher.finish(f"参数不足\n合并监控服务 <名称1> <名称2> <群组名称>")
+        await service_group_matcher.finish(f"参数不足\n合并服务 <名称1> <名称2> <群组名称>")
     bind_service_name_list = command_arg_list[:-1]
     name = command_arg_list[-1]
     try:
@@ -104,13 +100,31 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
 
 
-service_set_matcher = on_command("监控服务修改", aliases={"修改监控服务"}, permission=SUPERUSER)
+service_ungroup_matcher = on_command("服务解散", aliases={"解散服务"}, permission=SUPERUSER)
+
+
+@service_ungroup_matcher.handle()
+async def _(name_msg: Message = CommandArg()):
+    name = name_msg.extract_plain_text()
+    try:
+        manager.unbind_group_by_name(name)
+    except NameNotFoundError:
+        await service_ungroup_matcher.finish("操作失败：无法找到该名称的群组服务")
+    except NameConflictError:
+        await service_ungroup_matcher.finish("操作失败：即将解散的群组服务中与现有名称重复")
+    except:
+        await service_ungroup_matcher.finish("操作失败：内部错误")
+    manager.save(CONFIG_FILE_PATH)
+    await service_ungroup_matcher.finish(f"已成功解散群组")
+
+
+service_set_matcher = on_command("服务修改", aliases={"修改服务"}, permission=SUPERUSER)
 
 
 @service_set_matcher.handle()
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     if len(command_arg_list) < 3:
-        await service_group_matcher.finish(f"参数不足\n修改监控服务 <名称> <参数> <值>")
+        await service_group_matcher.finish(f"参数不足\n修改服务 <名称> <参数> <值>")
     name = command_arg_list[0]
     command_arg_list = command_arg_list[1:]
     if len(command_arg_list) % 2 != 0:
@@ -119,24 +133,19 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     for i in range(0, len(command_arg_list) - 1, 2):
         settings_list.append((command_arg_list[i], command_arg_list[i + 1]))
     logger.debug(f"Modifying settings: {name} @ {settings_list}")
-    manager.save(CONFIG_FILE_PATH)
     try:
         for key, value in settings_list:
             manager.modify_service_param(name, key, value)
     except NameNotFoundError:
-        manager.load(CONFIG_FILE_PATH)
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
     except ValidationError:
-        manager.load(CONFIG_FILE_PATH)
         await service_set_matcher.finish("操作失败：参数格式或类型不正确")
     except:
-        manager.load(CONFIG_FILE_PATH)
         await service_set_matcher.finish("操作失败：内部错误")
-    manager.save(CONFIG_FILE_PATH)
     await service_set_matcher.finish(f"服务 {name} 参数修改成功")
 
 
-reload_config_matcher = on_command("服务状态载入配置", permission=SUPERUSER)
+reload_config_matcher = on_command("服务重载", permission=SUPERUSER)
 
 
 @reload_config_matcher.handle()

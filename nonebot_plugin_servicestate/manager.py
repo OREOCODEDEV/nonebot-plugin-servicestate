@@ -4,6 +4,8 @@ from typing import Dict, List, Any, Tuple
 from pathlib import Path
 import json
 
+from nonebot.log import logger
+
 from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, support_protocol
 from .exception import (
     ProtocolUnsopportError,
@@ -11,6 +13,21 @@ from .exception import (
     NameNotFoundError,
     ParamInvalidError,
 )
+
+CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
+
+
+def modify_exception_recovery(func):
+    def inner(*args, **kw):
+        try:
+            manager.save()
+            return func(*args, **kw)
+        except Exception as e:
+            manager.load()
+            logger.error(f"Modify railed: {e}")
+            raise e
+
+    return inner
 
 
 class CommandManager:
@@ -20,7 +37,7 @@ class CommandManager:
     def __init__(self) -> None:
         pass
 
-    def load(self, path: Path):
+    def load(self, path: Path = CONFIG_FILE_PATH):
         with open(path, "r", encoding="utf-8") as f:
             load_dict = json.loads(f.read())
         self.__service_status = ServiceStatus.load(load_dict["service"])
@@ -28,7 +45,7 @@ class CommandManager:
             load_dict["service_group"]
         )
 
-    def save(self, path: Path):
+    def save(self, path: Path = CONFIG_FILE_PATH):
         save_dict = {
             "service": self.__service_status.export(),
             "service_group": self.__service_status_group.export(),
@@ -66,6 +83,15 @@ class CommandManager:
         for i in service_instance_list:
             self.__service_status.unbind_service(i)
 
+    @modify_exception_recovery
+    def unbind_group_by_name(self, name: str):
+        if name not in self.__service_status_group:
+            raise NameNotFoundError
+        for i in self.__service_status_group.bind_services_group[name].bind_services:
+            self.__service_status.bind_service(i)
+        self.__service_status_group.unbind_group_by_name(name)
+
+    @modify_exception_recovery
     def modify_service_param(self, name: str, key: str, value: str):
         for i, j in enumerate(self.__service_status.bind_services):
             if j == name:
@@ -82,3 +108,7 @@ class CommandManager:
             (await self.__service_status.get_detect_result()),
             **(await self.__service_status_group.get_detect_result()),
         )
+
+
+manager = CommandManager()
+manager.load(CONFIG_FILE_PATH)
