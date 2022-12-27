@@ -14,7 +14,7 @@ class ServiceStatus:
     def __contains__(self, item):
         if isinstance(item, str):
             for i in self.bind_services:
-                if i.name == item:
+                if i == item:
                     return True
         if isinstance(item, BaseProtocol):
             return item in self.bind_services
@@ -22,7 +22,7 @@ class ServiceStatus:
 
     def get_service_instance_by_name(self, name: str) -> BaseProtocol:
         for i in self.bind_services:
-            if name == i.name:
+            if name == i:
                 return i
         raise NameNotFoundError
 
@@ -32,11 +32,7 @@ class ServiceStatus:
     def unbind_service(self, unbind_service: BaseProtocol):
         if unbind_service not in self:
             raise NameNotFoundError
-        self.bind_services.pop(
-            self.bind_services.index(
-                self.get_service_instance_by_name(unbind_service.name)
-            )
-        )
+        self.bind_services.pop(self.bind_services.index(unbind_service))
 
     def unbind_service_by_name(self, unbind_service_name: str):
         service_instance = self.get_service_instance_by_name(unbind_service_name)
@@ -48,7 +44,7 @@ class ServiceStatus:
         result = await gather(*tasks)
         ret_dict = {}
         for i, j in zip(self.bind_services, result):
-            ret_dict[i.name] = j
+            ret_dict[i.data.name] = j
         return ret_dict
 
     @classmethod

@@ -1,47 +1,38 @@
 from __future__ import annotations
 
 from httpx import AsyncClient
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Any
 
-from .protocol import BaseProtocol
+from .protocol import BaseProtocol, BaseProtocolData
 
 from nonebot.log import logger
 
 
-class HTTP_Protocol(BaseProtocol):
-    _PROTOCOL_NAME = "HTTP"
-    _EXTEND_PARAMS = {"proxies": "代理"}
+class HTTPProtocolData(BaseProtocolData):
+    proxies: Union[str, None] = None
 
-    def __init__(self, name: str, host: str) -> None:
-        super().__init__(name=name, host=host)
-        self.proxies: Union[str, None] = None
+
+class HTTPProtocol(BaseProtocol):
+    _PROTOCOL_NAME = "HTTP"
+    _DATA_MODEL = HTTPProtocolData
 
     async def detect(self) -> bool:
         async with AsyncClient(
-            proxies=self.proxies,
+            proxies=self.data.proxies,
             verify=False,
             follow_redirects=True,
-            timeout=self.timeout,
+            timeout=self.data.timeout,
         ) as client:
             try:
-                respond = await client.get(url=self.host)
+                respond = await client.get(url=self.data.host)
             except:
-                logger.debug(f"GET -> {self.host} FAIL")
+                logger.debug(f"GET -> {self.data.host} FAIL")
                 return False
             if not respond:
-                logger.debug(f"GET -> {self.host} FAIL")
+                logger.debug(f"GET -> {self.data.host} FAIL")
                 return False
             if respond.status_code != 200:
-                logger.debug(f"GET -> {self.host} FAIL")
+                logger.debug(f"GET -> {self.data.host} FAIL")
                 return False
-            logger.debug(f"GET -> {self.host} OK")
+            logger.debug(f"GET -> {self.data.host} OK")
             return True
-
-    @classmethod
-    def load(cls, source: Dict) -> HTTP_Protocol:
-        instance = cls(source["name"], source["host"])
-        instance.timeout = source.get("timeout", 5)
-        instance.proxies = source.get("proxies", None)
-        if not isinstance(instance.timeout, int):
-            instance.timeout = int(instance.timeout)
-        return instance

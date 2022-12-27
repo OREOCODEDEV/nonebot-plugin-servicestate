@@ -68,7 +68,7 @@ class NonebotPluginServiceStateManager:
 
     def modify_service_param(self, name: str, key: str, value: str):
         for i, j in enumerate(self.__service_status.bind_services):
-            if j.name == name:
+            if j == name:
                 temp_config = j.export()
                 if key not in temp_config:
                     raise ConfigError
