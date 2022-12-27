@@ -159,13 +159,13 @@ X 故障 | 涩图
 ### 注册
 在`.\protocol\__init__.py`中导入需要注册的demo协议
 ```
-from .demo import DEMO_Protocol
+from .demo import DEMOProtocol
 ```
 
 ### 使用
 现在，你已经完成自定义协议的所有步骤，可直接使用你的自定义协议了
 
-添加demo协议命令：`添加监控服务 DemoProtocol DemoName your_url`
+添加demo协议命令：`添加监控服务 DemoProtocol DemoName demo_url`
 
 修改随机可用概率为 25% ：`修改监控服务 DemoName normal_rate 25`
 
