@@ -46,7 +46,7 @@ class DEMOProtocol(BaseProtocol):  # 类名可随意填写，但记得继承上�
             logger.info("Custom protocol refused")  # 在控制台记录一些信息
             return False  # 永远返回不可用状态
         random_result: bool = (
-            random.random() > self.data.normal_rate / 100
+            random.random() < self.data.normal_rate / 100
         )  # 按概率随机生成可用状态
         logger.info(f"Custom protocol random state: {random_result}")  # 在控制台记录一些信息
         return random_result  # 返回随机生成的可用状态（bool型）

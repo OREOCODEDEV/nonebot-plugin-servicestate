@@ -1,3 +1,3 @@
-from .nonebot_command import *
+from .adapter_nonebot import *
 
 # from debug import *

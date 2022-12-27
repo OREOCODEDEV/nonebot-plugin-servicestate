@@ -6,14 +6,14 @@ import json
 
 from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, support_protocol
 from .exception import (
-    UnsupportedProtocolError,
+    ProtocolUnsopportError,
     NameConflictError,
     NameNotFoundError,
-    ConfigError,
+    ParamInvalidError,
 )
 
 
-class NonebotPluginServiceStateManager:
+class CommandManager:
     __service_status: ServiceStatus = ServiceStatus()
     __service_status_group: ServiceStatusGroup = ServiceStatusGroup()
 
@@ -38,7 +38,7 @@ class NonebotPluginServiceStateManager:
 
     def bind_new_service(self, protocol: str, name: str, host: str):
         if protocol not in support_protocol():
-            raise UnsupportedProtocolError
+            raise ProtocolUnsopportError
         if name in self.__service_status:
             raise NameConflictError
         if name in self.__service_status_group:
@@ -71,7 +71,7 @@ class NonebotPluginServiceStateManager:
             if j == name:
                 temp_config = j.export()
                 if key not in temp_config:
-                    raise ConfigError
+                    raise ParamInvalidError
                 temp_config[key] = value
                 self.__service_status.bind_services[i] = j.load(temp_config)
                 return
@@ -82,23 +82,3 @@ class NonebotPluginServiceStateManager:
             (await self.__service_status.get_detect_result()),
             **(await self.__service_status_group.get_detect_result()),
         )
-
-    async def get_detect_result_text(self) -> str:
-        result_dict = await self.get_detect_result()
-        if result_dict == {}:
-            return "您未绑定任何监控的服务！"
-        pretty_text = ""
-        for name, result in result_dict.items():
-            pretty_text += "O" if result else "X"
-            pretty_text += "" if result else " "  # QQ字符O和X宽度不一致
-            pretty_text += " "
-            pretty_text += "正常" if result else "故障"
-            pretty_text += " | "
-            pretty_text += name
-            pretty_text += "\n"
-        pretty_text = pretty_text[:-1]
-        return pretty_text
-
-    def debug(self):
-        print(self.__service_status.export())
-        print(self.__service_status_group.export())

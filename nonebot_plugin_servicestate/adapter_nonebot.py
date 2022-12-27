@@ -1,5 +1,6 @@
 from typing import Dict, List, Any, Tuple
 from pathlib import Path
+from pydantic import ValidationError
 
 from nonebot.plugin.on import on_command
 from nonebot.params import CommandArg, Depends
@@ -9,15 +10,15 @@ from nonebot.permission import SUPERUSER
 
 from .service import support_protocol
 from .exception import (
-    UnsupportedProtocolError,
+    ProtocolUnsopportError,
     NameConflictError,
     NameNotFoundError,
-    ConfigError,
+    ParamCountInvalidError,
 )
-from .manager import NonebotPluginServiceStateManager
+from .manager import CommandManager
 
 CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
-manager = NonebotPluginServiceStateManager()
+manager = CommandManager()
 manager.load(CONFIG_FILE_PATH)
 
 service_status_matcher = on_command("服务状态")
@@ -25,7 +26,20 @@ service_status_matcher = on_command("服务状态")
 
 @service_status_matcher.handle()
 async def _():
-    await service_status_matcher.finish(await manager.get_detect_result_text())
+    result_dict = await manager.get_detect_result()
+    if result_dict == {}:
+        await service_status_matcher.finish("您未绑定任何监控的服务！")
+    pretty_text = ""
+    for name, result in result_dict.items():
+        pretty_text += "O" if result else "X"
+        # pretty_text += "" if result else " "  # QQ字符O和X宽度不一致
+        pretty_text += " "
+        pretty_text += "正常" if result else "故障"
+        pretty_text += " | "
+        pretty_text += name
+        pretty_text += "\n"
+    pretty_text = pretty_text[:-1]
+    await service_status_matcher.finish(pretty_text)
 
 
 def extract_str_list(command_arg: Message = CommandArg()):
@@ -33,8 +47,9 @@ def extract_str_list(command_arg: Message = CommandArg()):
 
 
 service_add_matcher = on_command(
-    "监控服务新增", aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"},
-    permission=SUPERUSER
+    "监控服务新增",
+    aliases={"监控服务添加", "监控服务增加", "添加监控服务", "增加监控服务", "新增监控服务"},
+    permission=SUPERUSER,
 )
 
 
@@ -47,7 +62,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     host = command_arg_list[2]
     try:
         manager.bind_new_service(protocol, name, host)
-    except UnsupportedProtocolError:
+    except ProtocolUnsopportError:
         await service_add_matcher.finish(
             f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(support_protocol())}"
         )
@@ -70,7 +85,9 @@ async def _(command_arg: Message = CommandArg()):
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
-service_group_matcher = on_command("监控服务合并", aliases={"合并监控服务", "群组监控服务"}, permission=SUPERUSER)
+service_group_matcher = on_command(
+    "监控服务合并", aliases={"合并监控服务", "群组监控服务"}, permission=SUPERUSER
+)
 
 
 @service_group_matcher.handle()
@@ -105,15 +122,13 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     manager.save(CONFIG_FILE_PATH)
     try:
         for key, value in settings_list:
-            if value == "None" or value == "空":
-                value = None
             manager.modify_service_param(name, key, value)
     except NameNotFoundError:
         manager.load(CONFIG_FILE_PATH)
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
-    except ConfigError:
+    except ValidationError:
         manager.load(CONFIG_FILE_PATH)
-        await service_set_matcher.finish("操作失败：参数格式不正确")
+        await service_set_matcher.finish("操作失败：参数格式或类型不正确")
     except:
         manager.load(CONFIG_FILE_PATH)
         await service_set_matcher.finish("操作失败：内部错误")

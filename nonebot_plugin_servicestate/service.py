@@ -4,7 +4,7 @@ from typing import Union, Dict, List, Any
 from asyncio import gather
 
 from .protocol import BaseProtocol, support_protocol
-from .exception import NameNotFoundError, UnsupportedProtocolError
+from .exception import NameNotFoundError, ProtocolUnsopportError
 
 
 class ServiceStatus:
@@ -52,7 +52,7 @@ class ServiceStatus:
         instance = cls()
         for key, value in source.items():
             if key not in support_protocol():
-                raise UnsupportedProtocolError(f"Unsopported protocol: {key} !")
+                raise ProtocolUnsopportError(f"Unsopported protocol: {key} !")
             for this_service_config in value:
                 this_service_instance = BaseProtocol._support_protocol[key].load(
                     this_service_config
