@@ -17,8 +17,9 @@ class TCP_Protocol(BaseProtocol):
     _DATA_MODEL = TCPPRotocolData
 
     async def detect(self) -> bool:
+        connect_func = asyncio.open_connection(self.data.host, self.data.port)
         try:
-            await asyncio.open_connection(self.data.host, self.data.port)
+            await asyncio.wait_for(connect_func, self.data.timeout)
             logger.debug(f"TCP -> {self.data.host}:{self.data.port} OK")
             return True
         except:

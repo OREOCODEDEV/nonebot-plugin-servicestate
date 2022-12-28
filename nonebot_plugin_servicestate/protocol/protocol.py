@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class BaseProtocolData(BaseModel):
     name: str = "Unknown"
     host: str = "127.0.0.1"
-    timeout: int = 3
+    timeout: int = 2
 
 
 class BaseProtocol(ABC):
