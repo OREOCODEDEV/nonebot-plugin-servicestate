@@ -11,11 +11,11 @@ _✨ NoneBot 服务状态查询插件 ✨_
 </div>
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/nonebot/plugin-apscheduler/master/LICENSE">
-    <img src="https://img.shields.io/github/license/nonebot/plugin-apscheduler.svg" alt="license">
+  <a href="https://raw.githubusercontent.com/OREOCODEDEV/nonebot-plugin-servicestate/main/LICENSE">
+    <img src="https://img.shields.io/github/license/OREOCODEDEV/nonebot-plugin-servicestate.svg" alt="license">
   </a>
-  <a href="https://pypi.python.org/pypi/nonebot-plugin-apscheduler">
-    <img src="https://img.shields.io/pypi/v/nonebot-plugin-apscheduler.svg" alt="pypi">
+  <a href="https://pypi.org/project/nonebot-plugin-servicestate/">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-servicestate" alt="pypi">
   </a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="python">
 </p>
