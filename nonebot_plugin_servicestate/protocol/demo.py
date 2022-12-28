@@ -41,12 +41,12 @@ class DEMOProtocol(BaseProtocol):  # 类名可随意填写，但记得继承上�
         在此处实现你的自定义协议的处理代码
         最终返回bool（True为可用，False为故障）
         """
-        if self.data.always_malfunction:
+        if self.always_malfunction:
             # 自定义参数中always_malfunction参数为True，永远返回不可用状态
             logger.info("Custom protocol refused")  # 在控制台记录一些信息
             return False  # 永远返回不可用状态
         random_result: bool = (
-            random.random() < self.data.normal_rate / 100
+            random.random() < self.normal_rate / 100
         )  # 按概率随机生成可用状态
         logger.info(f"Custom protocol random state: {random_result}")  # 在控制台记录一些信息
         return random_result  # 返回随机生成的可用状态（bool型）

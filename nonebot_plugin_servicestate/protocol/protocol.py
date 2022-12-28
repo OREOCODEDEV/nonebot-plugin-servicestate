@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, abstractclassmethod
-from typing import Union, Dict, List, Type
+from typing import Union, Dict, List, Type, Any
 from pydantic import BaseModel
 
 
@@ -16,7 +16,7 @@ class BaseProtocol(ABC):
     _DATA_MODEL = BaseProtocolData
 
     def __init__(self, *args, **kw) -> None:
-        self.data = self._DATA_MODEL(*args, **kw)
+        self.__data = self._DATA_MODEL(*args, **kw)
 
     def __init_subclass__(cls) -> None:
         for this_subclass in BaseProtocol.__subclasses__():
@@ -29,23 +29,26 @@ class BaseProtocol(ABC):
 
     def __eq__(self, __o: Union[str, BaseProtocol]) -> bool:
         if isinstance(__o, str):
-            return True if __o == self.data.name else False
+            return True if __o == self.name else False
         if not isinstance(__o, BaseProtocol):
             return False
-        if self.data.name != __o.data.name:
+        if self.name != __o.name:
             return False
-        if self.data.host != __o.data.host:
+        if self.host != __o.host:
             return False
         if self._PROTOCOL_NAME != __o._PROTOCOL_NAME:
             return False
         return True
+
+    def __getattr__(self, __name: str) -> Any:
+        return self.__data.dict()[__name]
 
     @abstractmethod
     async def detect(self) -> bool:
         return False
 
     def export(self) -> Dict:
-        return self.data.dict()
+        return self.__data.dict()
 
     @classmethod
     def load(cls, source: Dict[str, Union[str, int, None]]):

@@ -82,7 +82,7 @@ async def _(command_arg: Message = CommandArg()):
 
 
 service_group_matcher = on_command(
-    "服务合并", aliases={"合并服务", "群组服务","服务群组"}, permission=SUPERUSER
+    "服务合并", aliases={"合并服务", "群组服务", "服务群组"}, permission=SUPERUSER
 )
 
 

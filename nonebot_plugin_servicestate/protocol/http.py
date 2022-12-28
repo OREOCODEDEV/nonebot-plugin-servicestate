@@ -18,21 +18,21 @@ class HTTPProtocol(BaseProtocol):
 
     async def detect(self) -> bool:
         async with AsyncClient(
-            proxies=self.data.proxies,
+            proxies=self.proxies,
             verify=False,
             follow_redirects=True,
-            timeout=self.data.timeout,
+            timeout=self.timeout,
         ) as client:
             try:
-                respond = await client.get(url=self.data.host)
+                respond = await client.get(url=self.host)
             except:
-                logger.debug(f"GET -> {self.data.host} FAIL")
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
             if not respond:
-                logger.debug(f"GET -> {self.data.host} FAIL")
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
             if respond.status_code != 200:
-                logger.debug(f"GET -> {self.data.host} FAIL")
+                logger.debug(f"GET -> {self.host} FAIL")
                 return False
-            logger.debug(f"GET -> {self.data.host} OK")
+            logger.debug(f"GET -> {self.host} OK")
             return True

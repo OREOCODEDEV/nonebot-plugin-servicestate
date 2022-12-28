@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Dict, List
+from typing import Union, Dict
 
 from .protocol import BaseProtocol, BaseProtocolData
 
@@ -17,11 +17,11 @@ class TCP_Protocol(BaseProtocol):
     _DATA_MODEL = TCPPRotocolData
 
     async def detect(self) -> bool:
-        connect_func = asyncio.open_connection(self.data.host, self.data.port)
+        connect_func = asyncio.open_connection(self.host, self.port)
         try:
-            await asyncio.wait_for(connect_func, self.data.timeout)
-            logger.debug(f"TCP -> {self.data.host}:{self.data.port} OK")
+            await asyncio.wait_for(connect_func, self.timeout)
+            logger.debug(f"TCP -> {self.host}:{self.port} OK")
             return True
         except:
-            logger.debug(f"TCP -> {self.data.host}:{self.data.port} FAIL")
+            logger.debug(f"TCP -> {self.host}:{self.port} FAIL")
             return False
