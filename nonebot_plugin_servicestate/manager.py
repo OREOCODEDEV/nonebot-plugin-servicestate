@@ -51,7 +51,14 @@ class CommandManager:
             "service_group": self.__service_status_group.export(),
         }
         with open(path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(save_dict))
+            f.write(
+                json.dumps(
+                    save_dict,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    indent=4,
+                )
+            )
 
     def bind_new_service(self, protocol: str, name: str, host: str) -> None:
         if protocol not in support_protocol():
@@ -60,7 +67,7 @@ class CommandManager:
             raise NameConflictError
         if name in self.__service_status_group:
             raise NameConflictError
-        self.__service_status.register_service(name, host)
+        self.__service_status.register_service(protocol=protocol, name=name, host=host)
 
     def unbind_service_by_name(self, name: str) -> None:
         if name in self.__service_status:
@@ -102,8 +109,7 @@ class CommandManager:
     ):
         if group_name not in self.__service_status_group:
             raise NameNotFoundError
-        servicestatus_instance = self.__service_status_group[group_name]
-        temp_config = servicestatus_instance[service_name].export()
+        temp_config = self.__service_status_group[group_name][service_name].export()
         if key not in temp_config:
             raise ParamInvalidError
         temp_config[key] = value

@@ -12,7 +12,6 @@ from .service import support_protocol
 from .exception import (
     ProtocolUnsopportError,
     NameConflictError,
-    NameNotFoundError,
     ParamCountInvalidError,
 )
 from .manager import manager, CONFIG_FILE_PATH
@@ -75,7 +74,7 @@ service_del_matcher = on_command("服务删除", aliases={"删除服务"}, permi
 async def _(command_arg: Message = CommandArg()):
     try:
         manager.unbind_service_by_name(command_arg.extract_plain_text())
-    except NameNotFoundError:
+    except KeyError:
         await service_del_matcher.finish("操作失败：未找到该服务名称！")
     manager.save(CONFIG_FILE_PATH)
     await service_del_matcher.finish("已删除服务：" + command_arg)
@@ -94,7 +93,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     name = command_arg_list[-1]
     try:
         manager.bind_group_by_name(bind_service_name_list, name)
-    except NameNotFoundError:
+    except KeyError:
         await service_group_matcher.finish("操作失败：合并的服务名称中有一个或多个无法找到！")
     manager.save(CONFIG_FILE_PATH)
     await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
@@ -108,7 +107,7 @@ async def _(name_msg: Message = CommandArg()):
     name = name_msg.extract_plain_text()
     try:
         manager.unbind_group_by_name(name)
-    except NameNotFoundError:
+    except KeyError:
         await service_ungroup_matcher.finish("操作失败：无法找到该名称的群组服务")
     except NameConflictError:
         await service_ungroup_matcher.finish("操作失败：即将解散的群组服务中与现有名称重复")
@@ -135,8 +134,11 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     logger.debug(f"Modifying settings: {name} @ {settings_list}")
     try:
         for key, value in settings_list:
+            if name.find("@") != -1:
+                manager.modify_service_group_param(*(name.split("@")), key, value)
+                break
             manager.modify_service_param(name, key, value)
-    except NameNotFoundError:
+    except KeyError:
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
     except ValidationError:
         await service_set_matcher.finish("操作失败：参数格式或类型不正确")

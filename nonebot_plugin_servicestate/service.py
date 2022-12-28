@@ -4,7 +4,7 @@ from typing import Union, Dict, List, Any, Tuple
 from asyncio import gather
 
 from .protocol import BaseProtocol, support_protocol
-from .exception import NameNotFoundError, ProtocolUnsopportError
+from .exception import ProtocolUnsopportError
 
 
 class ServiceStatus:
@@ -41,7 +41,9 @@ class ServiceStatus:
         raise KeyError(key)
 
     def register_service(self, protocol: str, *args, **kw):
-        protocol_instance = BaseProtocol._support_protocol[protocol](*args, **kw)
+        if protocol not in support_protocol():
+            raise ProtocolUnsopportError
+        self.bind_service(BaseProtocol._support_protocol[protocol](*args, **kw))
 
     def bind_service(self, service: BaseProtocol) -> None:
         self.__bind_services.append(service)
@@ -134,7 +136,7 @@ class ServiceStatusGroup:
 
     def unbind_group(self, key: str) -> None:
         if key not in self:
-            raise NameNotFoundError
+            raise KeyError
         del self.__bind_services_group[key]
 
     async def get_detect_result(self) -> Dict[str, bool]:

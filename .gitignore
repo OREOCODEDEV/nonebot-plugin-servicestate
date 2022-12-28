@@ -2,3 +2,4 @@
 *.pyc
 debug.py
 dist/*
+config.txt
