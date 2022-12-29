@@ -6,7 +6,7 @@ import json
 
 from nonebot.log import logger
 
-from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, support_protocol
+from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, SupportProtocol
 from .exception import (
     ProtocolUnsopportError,
     NameConflictError,
@@ -61,7 +61,7 @@ class CommandManager:
             )
 
     def bind_new_service(self, protocol: str, name: str, host: str) -> None:
-        if protocol not in support_protocol():
+        if protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
         if name in self.__service_status:
             raise NameConflictError

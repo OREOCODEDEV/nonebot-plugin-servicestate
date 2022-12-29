@@ -5,16 +5,22 @@ from pydantic import ValidationError
 from nonebot.plugin.on import on_command
 from nonebot.params import CommandArg, Depends
 from nonebot.adapters.onebot.v11 import Message
-from nonebot.log import logger
+import nonebot.log
 from nonebot.permission import SUPERUSER
 
-from .service import support_protocol
+from .logger import set_logger, logger
+
+set_logger(nonebot.log.logger)
+
+from .service import SupportProtocol
 from .exception import (
     ProtocolUnsopportError,
     NameConflictError,
     ParamCountInvalidError,
+    NameEscapeCharacterCountError,
 )
 from .manager import manager, CONFIG_FILE_PATH
+from .utils import Escharacter
 
 service_status_matcher = on_command("服务状态")
 
@@ -59,7 +65,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
         manager.bind_new_service(protocol, name, host)
     except ProtocolUnsopportError:
         await service_add_matcher.finish(
-            f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(support_protocol())}"
+            f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(SupportProtocol.get())}"
         )
     except NameConflictError:
         await service_add_matcher.finish("服务名称冲突！\n请修改新增服务名称或移除同名服务后再试")
@@ -124,7 +130,10 @@ service_set_matcher = on_command("服务修改", aliases={"修改服务"}, permi
 async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     if len(command_arg_list) < 3:
         await service_group_matcher.finish(f"参数不足\n修改服务 <名称> <参数> <值>")
-    name = command_arg_list[0]
+    try:
+        name = Escharacter(command_arg_list[0])
+    except NameEscapeCharacterCountError:
+        await service_group_matcher.finish("操作失败：@ 转义符解析错误\n修改服务 <群组名>@<服务名> <参数名> <值>")
     command_arg_list = command_arg_list[1:]
     if len(command_arg_list) % 2 != 0:
         await service_set_matcher.finish("操作失败：修改的参数需成对以 <参数名> <值> 方法提供")
@@ -134,9 +143,9 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     logger.debug(f"Modifying settings: {name} @ {settings_list}")
     try:
         for key, value in settings_list:
-            if name.find("@") != -1:
-                manager.modify_service_group_param(*(name.split("@")), key, value)
-                break
+            if name.is_group:
+                manager.modify_service_group_param(*name.group_name, key, value)
+                continue
             manager.modify_service_param(name, key, value)
     except KeyError:
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")

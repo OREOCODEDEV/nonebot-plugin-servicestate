@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Union, Dict, List, Any, Tuple
 from asyncio import gather
 
-from .protocol import BaseProtocol, support_protocol
+from .protocol import BaseProtocol, SupportProtocol
 from .exception import ProtocolUnsopportError
+from .logger import logger
 
 
 class ServiceStatus:
@@ -41,9 +42,9 @@ class ServiceStatus:
         raise KeyError(key)
 
     def register_service(self, protocol: str, *args, **kw):
-        if protocol not in support_protocol():
+        if protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
-        self.bind_service(BaseProtocol._support_protocol[protocol](*args, **kw))
+        self.bind_service(SupportProtocol.SUPPORT_PROTOCOL[protocol](*args, **kw))
 
     def bind_service(self, service: BaseProtocol) -> None:
         self.__bind_services.append(service)
@@ -67,10 +68,12 @@ class ServiceStatus:
     def load(cls, source: Dict[str, List]) -> ServiceStatus:
         instance = cls()
         for key, value in source.items():
-            if key not in support_protocol():
-                raise ProtocolUnsopportError(f"Unsopported protocol: {key} !")
+            if key not in SupportProtocol.get():
+                logger.error(f"Unsopported protocol: {key} !")
+                logger.warning(f"Protocol {key} will ignored from loading")
+                continue
             for this_service_config in value:
-                this_service_instance = BaseProtocol._support_protocol[key].load(
+                this_service_instance = SupportProtocol.SUPPORT_PROTOCOL[key].load(
                     this_service_config
                 )
                 instance.bind_service(this_service_instance)
@@ -78,7 +81,7 @@ class ServiceStatus:
 
     def export(self) -> Dict[str, List[Dict]]:
         ret_dict = {}
-        for i in support_protocol():
+        for i in SupportProtocol.get():
             ret_dict[i] = []
             for j in self:
                 if j._PROTOCOL_NAME != i:
