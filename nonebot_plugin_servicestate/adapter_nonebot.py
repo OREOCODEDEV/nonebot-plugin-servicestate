@@ -5,12 +5,12 @@ from pydantic import ValidationError
 from nonebot.plugin.on import on_command
 from nonebot.params import CommandArg, Depends
 from nonebot.adapters.onebot.v11 import Message
-import nonebot.log
+import nonebot.log as nb_log
 from nonebot.permission import SUPERUSER
 
 from .logger import set_logger, logger
 
-set_logger(nonebot.log.logger)
+set_logger(nb_log.logger)
 
 from .service import SupportProtocol
 from .exception import (

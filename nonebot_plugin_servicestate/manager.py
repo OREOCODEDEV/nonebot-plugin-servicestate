@@ -110,11 +110,12 @@ class CommandManager:
     def modify_service_group_param(self, group_name: str, service_name, key: str, value: str):
         if group_name not in self.__service_status_group:
             raise NameNotFoundError
-        temp_config = self.__service_status_group[group_name][service_name].export()
+        original_instance = self.__service_status_group[group_name][service_name]
+        temp_config = original_instance.export()
         if key not in temp_config:
             raise ParamInvalidError
         temp_config[key] = value
-        self.__service_status_group[group_name][service_name].load(temp_config)
+        self.__service_status_group[group_name][service_name]=original_instance.load(temp_config)
 
     async def get_detect_result(self):
         return dict(
