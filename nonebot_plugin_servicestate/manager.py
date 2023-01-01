@@ -7,6 +7,7 @@ import json
 from nonebot.log import logger
 
 from nonebot.plugin.load import require
+
 require("nonebot_plugin_localstore")
 import nonebot_plugin_localstore as store
 
@@ -18,7 +19,9 @@ from .exception import (
     ParamInvalidError,
 )
 
-plugin_config_file_path = Path(store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json"))
+plugin_config_file_path = Path(
+    store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json")
+)
 
 
 def modify_exception_recovery(func):
@@ -45,7 +48,9 @@ class CommandManager:
         with open(path, "r", encoding="utf-8") as f:
             load_dict = json.loads(f.read())
         self.__service_status = ServiceStatus.load(load_dict["service"])
-        self.__service_status_group = ServiceStatusGroup.load(load_dict["service_group"])
+        self.__service_status_group = ServiceStatusGroup.load(
+            load_dict["service_group"]
+        )
 
     def save(self, path: Path = plugin_config_file_path) -> None:
         save_dict = {
@@ -84,7 +89,9 @@ class CommandManager:
         raise NameNotFoundError
 
     def bind_group_by_name(self, service_name_list: List[str], name: str) -> None:
-        service_instance_list: List[BaseProtocol] = [self.__service_status[i] for i in service_name_list]
+        service_instance_list: List[BaseProtocol] = [
+            self.__service_status[i] for i in service_name_list
+        ]
         self.__service_status_group.bind_group(service_instance_list, name)
         for i in service_instance_list:
             self.__service_status.unbind_service(i)
@@ -107,7 +114,9 @@ class CommandManager:
         self.__service_status[name] = protocol_instance.load(temp_config)
 
     @modify_exception_recovery
-    def modify_service_group_param(self, group_name: str, service_name, key: str, value: str):
+    def modify_service_group_param(
+        self, group_name: str, service_name, key: str, value: str
+    ):
         if group_name not in self.__service_status_group:
             raise NameNotFoundError
         original_instance = self.__service_status_group[group_name][service_name]
@@ -115,7 +124,9 @@ class CommandManager:
         if key not in temp_config:
             raise ParamInvalidError
         temp_config[key] = value
-        self.__service_status_group[group_name][service_name]=original_instance.load(temp_config)
+        self.__service_status_group[group_name][service_name] = original_instance.load(
+            temp_config
+        )
 
     async def get_detect_result(self):
         return dict(
