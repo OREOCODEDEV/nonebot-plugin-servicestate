@@ -19,8 +19,7 @@ from .exception import (
     ParamCountInvalidError,
     NameEscapeCharacterCountError,
 )
-from .manager import manager, CONFIG_FILE_PATH
-from .utils import Escharacter
+from .manager import manager
 
 service_status_matcher = on_command("服务状态")
 
@@ -69,7 +68,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
         )
     except NameConflictError:
         await service_add_matcher.finish("服务名称冲突！\n请修改新增服务名称或移除同名服务后再试")
-    manager.save(CONFIG_FILE_PATH)
+    manager.save()
     await service_add_matcher.finish(f"{protocol} 协议绑定成功")
 
 
@@ -82,7 +81,7 @@ async def _(command_arg: Message = CommandArg()):
         manager.unbind_service_by_name(command_arg.extract_plain_text())
     except KeyError:
         await service_del_matcher.finish("操作失败：未找到该服务名称！")
-    manager.save(CONFIG_FILE_PATH)
+    manager.save()
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
@@ -101,7 +100,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
         manager.bind_group_by_name(bind_service_name_list, name)
     except KeyError:
         await service_group_matcher.finish("操作失败：合并的服务名称中有一个或多个无法找到！")
-    manager.save(CONFIG_FILE_PATH)
+    manager.save()
     await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
 
 
@@ -119,7 +118,7 @@ async def _(name_msg: Message = CommandArg()):
         await service_ungroup_matcher.finish("操作失败：即将解散的群组服务中与现有名称重复")
     except:
         await service_ungroup_matcher.finish("操作失败：内部错误")
-    manager.save(CONFIG_FILE_PATH)
+    manager.save()
     await service_ungroup_matcher.finish(f"已成功解散群组")
 
 
@@ -161,5 +160,5 @@ reload_config_matcher = on_command("服务重载", permission=SUPERUSER)
 
 @reload_config_matcher.handle()
 async def _():
-    manager.load(CONFIG_FILE_PATH)
+    manager.load()
     await reload_config_matcher.finish("已重新载入服务状态配置")
