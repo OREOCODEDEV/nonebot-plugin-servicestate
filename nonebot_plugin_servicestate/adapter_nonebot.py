@@ -156,6 +156,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
         await service_set_matcher.finish("操作失败：参数格式或类型不正确")
     except:
         await service_set_matcher.finish("操作失败：内部错误")
+    manager.save()
     await service_set_matcher.finish(f"服务 {name} 参数修改成功")
 
 

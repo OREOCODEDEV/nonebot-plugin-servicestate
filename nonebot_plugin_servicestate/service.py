@@ -68,6 +68,7 @@ class ServiceStatus:
     def load(cls, source: Dict[str, List]) -> ServiceStatus:
         instance = cls()
         for key, value in source.items():
+            logger.debug(f"Loading protocol {key} with {value}")
             if key not in SupportProtocol.get():
                 logger.error(f"Unsopported protocol: {key} !")
                 logger.warning(f"Protocol {key} will ignored from loading")
