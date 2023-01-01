@@ -18,8 +18,10 @@ from .exception import (
     NameConflictError,
     ParamCountInvalidError,
     NameEscapeCharacterCountError,
+    NameNotFoundError,
 )
 from .manager import manager
+from .utils import Escharacter
 
 service_status_matcher = on_command("服务状态")
 
@@ -80,6 +82,8 @@ async def _(command_arg: Message = CommandArg()):
     try:
         manager.unbind_service_by_name(command_arg.extract_plain_text())
     except KeyError:
+        await service_del_matcher.finish("操作失败：未找到该服务名称！")
+    except NameNotFoundError:
         await service_del_matcher.finish("操作失败：未找到该服务名称！")
     manager.save()
     await service_del_matcher.finish("已删除服务：" + command_arg)
@@ -145,7 +149,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
             if name.is_group:
                 manager.modify_service_group_param(*name.group_name, key, value)
                 continue
-            manager.modify_service_param(name, key, value)
+            manager.modify_service_param(name.name, key, value)
     except KeyError:
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
     except ValidationError:

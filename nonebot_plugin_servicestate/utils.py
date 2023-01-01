@@ -14,11 +14,11 @@ class Escharacter:
         self.is_group = False
         if len(self.__extract_content) != 1:
             self.is_group = True
-        if self.is_group and len(self.is_group) > max_count:
+        if self.is_group and len(self.__extract_content) > max_count:
             raise NameEscapeCharacterCountError
 
     def __repr__(self) -> str:
-        return self.__extract_content if self.is_group else self.__raw_content
+        return str(self.__extract_content) if self.is_group else self.__raw_content
 
     @property
     def name(self) -> str:
