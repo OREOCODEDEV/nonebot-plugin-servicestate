@@ -11,6 +11,7 @@ from nonebot.permission import SUPERUSER
 from .logger import set_logger, logger
 
 set_logger(nb_log.logger)
+logger = nb_log.logger
 
 from .service import SupportProtocol
 from .exception import (
