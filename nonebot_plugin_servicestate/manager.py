@@ -134,6 +134,14 @@ class CommandManager:
             **(await self.__service_status_group.get_detect_result()),
         )
 
+    def get_service_count(self) -> Tuple[int, int, int]:
+        single_count = len(self.__service_status)
+        group_count = len(self.__service_status_group)
+        group_service_count = 0
+        for i in self.__service_status_group:
+            group_service_count += len(i)
+        return single_count, group_count, group_service_count
+
 
 manager = CommandManager()
 if not plugin_config_file_path.is_file():

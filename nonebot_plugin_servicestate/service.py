@@ -41,6 +41,9 @@ class ServiceStatus:
                 return
         raise KeyError(key)
 
+    def __len__(self) -> int:
+        return len(self.__bind_services)
+
     def register_service(self, protocol: str, *args, **kw):
         if protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
@@ -125,6 +128,9 @@ class ServiceStatusGroup:
                 self.__bind_services_group[i] = value
                 return
         raise KeyError(key)
+
+    def __len__(self):
+        return len(self.__bind_services_group)
 
     def items(self):
         return self.__bind_services_group.items()

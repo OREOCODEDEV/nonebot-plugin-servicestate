@@ -23,6 +23,7 @@ from .exception import (
 )
 from .manager import manager
 from .utils import Escharacter
+from . import compatible
 
 service_status_matcher = on_command("服务状态")
 
