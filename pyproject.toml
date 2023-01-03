@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-servicestate"
-version = "0.1.1"
+version = "0.1.2"
 description = "基于NoneBot2的状态监测插件"
 authors = ["OREOCODEDEV <17620745509@126.COM>"]
 license = "MIT"
