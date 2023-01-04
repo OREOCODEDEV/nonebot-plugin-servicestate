@@ -1,7 +1,31 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractclassmethod
+from abc import ABC, abstractmethod
 from typing import Union, Dict, List, Type, Any
 from pydantic import BaseModel
+
+
+class SupportProtocol:
+    __SUPPORT_PROTOCOL: Dict[str, BaseProtocol] = {}
+    SUPPORT_PROTOCOL: Dict[str, BaseProtocol] = {}
+
+    @staticmethod
+    def register() -> None:
+        for this_subclass in BaseProtocol.__subclasses__():
+            if this_subclass._PROTOCOL_NAME is None:
+                raise NotImplementedError('Protocol should have "_PROTOCOL_NAME"')
+            if (
+                this_subclass._PROTOCOL_NAME
+                in SupportProtocol.__SUPPORT_PROTOCOL.keys()
+            ):
+                continue
+            SupportProtocol.__SUPPORT_PROTOCOL[
+                this_subclass._PROTOCOL_NAME
+            ] = this_subclass
+            SupportProtocol.SUPPORT_PROTOCOL = SupportProtocol.__SUPPORT_PROTOCOL
+
+    @staticmethod
+    def get() -> List[str]:
+        return SupportProtocol.__SUPPORT_PROTOCOL.keys()
 
 
 class BaseProtocolData(BaseModel):
@@ -11,7 +35,6 @@ class BaseProtocolData(BaseModel):
 
 
 class BaseProtocol(ABC):
-    _support_protocol: dict = {}
     _PROTOCOL_NAME = None
     _DATA_MODEL = BaseProtocolData
 
@@ -19,17 +42,12 @@ class BaseProtocol(ABC):
         self.__data = self._DATA_MODEL(*args, **kw)
 
     def __init_subclass__(cls) -> None:
-        for this_subclass in BaseProtocol.__subclasses__():
-            if this_subclass._PROTOCOL_NAME is None:
-                raise NotImplementedError('Protocol should have "_PROTOCOL_NAME"')
-            if this_subclass._PROTOCOL_NAME in BaseProtocol._support_protocol:
-                continue
-            BaseProtocol._support_protocol[this_subclass._PROTOCOL_NAME] = this_subclass
+        SupportProtocol.register()
         return super().__init_subclass__()
 
     def __eq__(self, __o: Union[str, BaseProtocol]) -> bool:
         if isinstance(__o, str):
-            return True if __o == self.name else False
+            return __o == self.name
         if not isinstance(__o, BaseProtocol):
             return False
         if self.name != __o.name:
@@ -41,7 +59,7 @@ class BaseProtocol(ABC):
         return True
 
     def __getattr__(self, __name: str) -> Any:
-        return self.__data.dict()[__name]
+        return getattr(self.__data, __name)
 
     @abstractmethod
     async def detect(self) -> bool:
@@ -51,9 +69,5 @@ class BaseProtocol(ABC):
         return self.__data.dict()
 
     @classmethod
-    def load(cls, source: Dict[str, Union[str, int, None]]):
+    def load(cls, source: Dict[str, Union[str, int, None]]) -> BaseProtocol:
         return cls(**source)
-
-
-def support_protocol() -> List[str]:
-    return list(BaseProtocol._support_protocol.keys())

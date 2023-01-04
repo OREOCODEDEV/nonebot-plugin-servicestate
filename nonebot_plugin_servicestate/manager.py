@@ -6,7 +6,12 @@ import json
 
 from nonebot.log import logger
 
-from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, support_protocol
+from nonebot.plugin.load import require
+
+require("nonebot_plugin_localstore")
+import nonebot_plugin_localstore as store
+
+from .service import ServiceStatus, ServiceStatusGroup, BaseProtocol, SupportProtocol
 from .exception import (
     ProtocolUnsopportError,
     NameConflictError,
@@ -14,7 +19,9 @@ from .exception import (
     ParamInvalidError,
 )
 
-CONFIG_FILE_PATH = Path(__file__).parent.joinpath("config.txt")
+plugin_config_file_path = Path(
+    store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json")
+)
 
 
 def modify_exception_recovery(func):
@@ -37,7 +44,7 @@ class CommandManager:
     def __init__(self) -> None:
         pass
 
-    def load(self, path: Path = CONFIG_FILE_PATH) -> None:
+    def load(self, path: Path = plugin_config_file_path) -> None:
         with open(path, "r", encoding="utf-8") as f:
             load_dict = json.loads(f.read())
         self.__service_status = ServiceStatus.load(load_dict["service"])
@@ -45,11 +52,14 @@ class CommandManager:
             load_dict["service_group"]
         )
 
-    def save(self, path: Path = CONFIG_FILE_PATH) -> None:
+    def save(self, path: Path = plugin_config_file_path) -> None:
         save_dict = {
             "service": self.__service_status.export(),
             "service_group": self.__service_status_group.export(),
         }
+        if not path.exists():
+            logger.debug("Creating plugin folder")
+            path.parent.mkdir()
         with open(path, "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
@@ -61,7 +71,7 @@ class CommandManager:
             )
 
     def bind_new_service(self, protocol: str, name: str, host: str) -> None:
-        if protocol not in support_protocol():
+        if protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
         if name in self.__service_status:
             raise NameConflictError
@@ -109,11 +119,14 @@ class CommandManager:
     ):
         if group_name not in self.__service_status_group:
             raise NameNotFoundError
-        temp_config = self.__service_status_group[group_name][service_name].export()
+        original_instance = self.__service_status_group[group_name][service_name]
+        temp_config = original_instance.export()
         if key not in temp_config:
             raise ParamInvalidError
         temp_config[key] = value
-        self.__service_status_group[group_name][service_name].load(temp_config)
+        self.__service_status_group[group_name][service_name] = original_instance.load(
+            temp_config
+        )
 
     async def get_detect_result(self):
         return dict(
@@ -121,6 +134,17 @@ class CommandManager:
             **(await self.__service_status_group.get_detect_result()),
         )
 
+    def get_service_count(self) -> Tuple[int, int, int]:
+        single_count = len(self.__service_status)
+        group_count = len(self.__service_status_group)
+        group_service_count = 0
+        for i in self.__service_status_group:
+            group_service_count += len(i)
+        return single_count, group_count, group_service_count
+
 
 manager = CommandManager()
-manager.load(CONFIG_FILE_PATH)
+if not plugin_config_file_path.is_file():
+    logger.info("Creating config file")
+    manager.save()
+manager.load(plugin_config_file_path)

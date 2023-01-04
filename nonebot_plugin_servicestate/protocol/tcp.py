@@ -8,13 +8,13 @@ from nonebot.log import logger
 import asyncio
 
 
-class TCPPRotocolData(BaseProtocolData):
+class TCPProtocolData(BaseProtocolData):
     port: int = 80
 
 
-class TCP_Protocol(BaseProtocol):
+class TCPProtocol(BaseProtocol):
     _PROTOCOL_NAME = "TCP"
-    _DATA_MODEL = TCPPRotocolData
+    _DATA_MODEL = TCPProtocolData
 
     async def detect(self) -> bool:
         connect_func = asyncio.open_connection(self.host, self.port)

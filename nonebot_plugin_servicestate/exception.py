@@ -21,3 +21,8 @@ class ParamInvalidError(Exception):
 class ParamCountInvalidError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class NameEscapeCharacterCountError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
