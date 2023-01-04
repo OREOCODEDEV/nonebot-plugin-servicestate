@@ -38,4 +38,4 @@ jobs:
     - name: Build package
       run: poetry build
     - name: Publish package
-      run: twine -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
+      run: twine upload dist/* -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
