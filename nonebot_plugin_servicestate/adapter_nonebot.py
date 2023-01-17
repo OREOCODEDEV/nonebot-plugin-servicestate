@@ -67,9 +67,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     try:
         manager.bind_new_service(protocol, name, host)
     except ProtocolUnsopportError:
-        await service_add_matcher.finish(
-            f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(SupportProtocol.get())}"
-        )
+        await service_add_matcher.finish(f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(SupportProtocol.get())}")
     except NameConflictError:
         await service_add_matcher.finish("服务名称冲突！\n请修改新增服务名称或移除同名服务后再试")
     manager.save()
@@ -91,9 +89,7 @@ async def _(command_arg: Message = CommandArg()):
     await service_del_matcher.finish("已删除服务：" + command_arg)
 
 
-service_group_matcher = on_command(
-    "服务合并", aliases={"合并服务", "群组服务", "服务群组"}, permission=SUPERUSER
-)
+service_group_matcher = on_command("服务合并", aliases={"合并服务", "群组服务", "服务群组"}, permission=SUPERUSER)
 
 
 @service_group_matcher.handle()
@@ -148,10 +144,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     logger.debug(f"Modifying settings: {name} @ {settings_list}")
     try:
         for key, value in settings_list:
-            if name.is_group:
-                manager.modify_service_group_param(*name.group_name, key, value)
-                continue
-            manager.modify_service_param(name.name, key, value)
+            manager.modify_service_param(name.auto_name, key, value)
     except KeyError:
         await service_set_matcher.finish("操作失败：修改的服务名或参数名未找到")
     except ValidationError:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Union
 from pathlib import Path
 import json
 
@@ -19,9 +19,7 @@ from .exception import (
     ParamInvalidError,
 )
 
-plugin_config_file_path = Path(
-    store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json")
-)
+plugin_config_file_path = Path(store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json"))
 
 
 def modify_exception_recovery(func):
@@ -48,9 +46,7 @@ class CommandManager:
         with open(path, "r", encoding="utf-8") as f:
             load_dict = json.loads(f.read())
         self.__service_status = ServiceStatus.load(load_dict["service"])
-        self.__service_status_group = ServiceStatusGroup.load(
-            load_dict["service_group"]
-        )
+        self.__service_status_group = ServiceStatusGroup.load(load_dict["service_group"])
 
     def save(self, path: Path = plugin_config_file_path) -> None:
         save_dict = {
@@ -79,7 +75,9 @@ class CommandManager:
             raise NameConflictError
         self.__service_status.register_service(protocol=protocol, name=name, host=host)
 
-    def unbind_service_by_name(self, name: str) -> None:
+    def unbind_service_by_name(self, name: Union[str, List[str]]) -> None:
+        if isinstance(name, List):
+            return self.__unbind_service_group_by_name(*name)
         if name in self.__service_status:
             self.__service_status.unbind_service(name)
             return
@@ -88,10 +86,13 @@ class CommandManager:
             return
         raise NameNotFoundError
 
+    def __unbind_service_group_by_name(self, group_name: str, name: str) -> None:
+        if group_name not in self.__service_status_group:
+            raise NameNotFoundError
+        self.__service_status_group[group_name].unbind_service(name)
+
     def bind_group_by_name(self, service_name_list: List[str], name: str) -> None:
-        service_instance_list: List[BaseProtocol] = [
-            self.__service_status[i] for i in service_name_list
-        ]
+        service_instance_list: List[BaseProtocol] = [self.__service_status[i] for i in service_name_list]
         self.__service_status_group.bind_group(service_instance_list, name)
         for i in service_instance_list:
             self.__service_status.unbind_service(i)
@@ -105,7 +106,9 @@ class CommandManager:
         self.__service_status_group.unbind_group(name)
 
     @modify_exception_recovery
-    def modify_service_param(self, name: str, key: str, value: str) -> None:
+    def modify_service_param(self, name: Union[str, List[str]], key: str, value: str) -> None:
+        if isinstance(name, List):
+            return self.__modify_service_group_param(*name, key=key, value=value)
         protocol_instance = self.__service_status[name]
         temp_config = protocol_instance.export()
         if key not in temp_config:
@@ -114,9 +117,7 @@ class CommandManager:
         self.__service_status[name] = protocol_instance.load(temp_config)
 
     @modify_exception_recovery
-    def modify_service_group_param(
-        self, group_name: str, service_name, key: str, value: str
-    ):
+    def __modify_service_group_param(self, group_name: str, service_name, key: str, value: str):
         if group_name not in self.__service_status_group:
             raise NameNotFoundError
         original_instance = self.__service_status_group[group_name][service_name]
@@ -124,9 +125,7 @@ class CommandManager:
         if key not in temp_config:
             raise ParamInvalidError
         temp_config[key] = value
-        self.__service_status_group[group_name][service_name] = original_instance.load(
-            temp_config
-        )
+        self.__service_status_group[group_name][service_name] = original_instance.load(temp_config)
 
     async def get_detect_result(self):
         return dict(

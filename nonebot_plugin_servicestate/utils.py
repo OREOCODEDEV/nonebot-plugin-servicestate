@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from .exception import NameEscapeCharacterCountError
 
 
@@ -31,3 +31,7 @@ class Escharacter:
         if not self.is_group:
             raise ValueError("Name should not access with group_name property")
         return self.__extract_content
+
+    @property
+    def auto_name(self) -> Union[str, List[str]]:
+        return self.__raw_content if self.is_group else self.__extract_content
