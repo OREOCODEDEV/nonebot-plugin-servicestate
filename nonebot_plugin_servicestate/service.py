@@ -71,15 +71,13 @@ class ServiceStatus:
     def load(cls, source: Dict[str, List]) -> ServiceStatus:
         instance = cls()
         for key, value in source.items():
-            logger.debug(f"Loading protocol {key} with {value}")
+            # logger.debug(f"Loading protocol {key} with {value}")
             if key not in SupportProtocol.get():
                 logger.error(f"Unsopported protocol: {key} !")
                 logger.warning(f"Protocol {key} will ignored from loading")
                 continue
             for this_service_config in value:
-                this_service_instance = SupportProtocol.SUPPORT_PROTOCOL[key].load(
-                    this_service_config
-                )
+                this_service_instance = SupportProtocol.SUPPORT_PROTOCOL[key].load(this_service_config)
                 instance.bind_service(this_service_instance)
         return instance
 
@@ -163,9 +161,7 @@ class ServiceStatusGroup:
     def load(cls, source: Dict[str, Dict[str, List]]) -> ServiceStatusGroup:
         instance = cls()
         for name, service_status_config in source.items():
-            instance.__bind_services_group[name] = ServiceStatus.load(
-                service_status_config
-            )
+            instance.__bind_services_group[name] = ServiceStatus.load(service_status_config)
         return instance
 
     def export(self) -> Dict[str, Dict[str, List]]:

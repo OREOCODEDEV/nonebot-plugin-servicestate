@@ -5,27 +5,20 @@ from pydantic import BaseModel
 
 
 class SupportProtocol:
-    __SUPPORT_PROTOCOL: Dict[str, BaseProtocol] = {}
-    SUPPORT_PROTOCOL: Dict[str, BaseProtocol] = {}
+    SUPPORT_PROTOCOL: Dict[str, Type[BaseProtocol]] = {}
 
     @staticmethod
     def register() -> None:
         for this_subclass in BaseProtocol.__subclasses__():
             if this_subclass._PROTOCOL_NAME is None:
-                raise NotImplementedError('Protocol should have "_PROTOCOL_NAME"')
-            if (
-                this_subclass._PROTOCOL_NAME
-                in SupportProtocol.__SUPPORT_PROTOCOL.keys()
-            ):
+                raise ValueError('Protocol should have "_PROTOCOL_NAME"')
+            if this_subclass._PROTOCOL_NAME in SupportProtocol.SUPPORT_PROTOCOL.keys():
                 continue
-            SupportProtocol.__SUPPORT_PROTOCOL[
-                this_subclass._PROTOCOL_NAME
-            ] = this_subclass
-            SupportProtocol.SUPPORT_PROTOCOL = SupportProtocol.__SUPPORT_PROTOCOL
+            SupportProtocol.SUPPORT_PROTOCOL[this_subclass._PROTOCOL_NAME] = this_subclass
 
     @staticmethod
     def get() -> List[str]:
-        return SupportProtocol.__SUPPORT_PROTOCOL.keys()
+        return list(SupportProtocol.SUPPORT_PROTOCOL.keys())
 
 
 class BaseProtocolData(BaseModel):
@@ -49,7 +42,7 @@ class BaseProtocol(ABC):
         if isinstance(__o, str):
             return __o == self.name
         if not isinstance(__o, BaseProtocol):
-            return False
+            raise TypeError(f"BaseProtocol unsopport compare with {type(__o)}")
         if self.name != __o.name:
             return False
         if self.host != __o.host:
