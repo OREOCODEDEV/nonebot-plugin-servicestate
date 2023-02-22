@@ -4,7 +4,7 @@ from typing import Union, Dict, List, Any, Tuple
 from asyncio import gather
 
 from .protocol import BaseProtocol, SupportProtocol
-from .exception import ProtocolUnsopportError
+from .exception import ProtocolUnsopportError, NameConflictError
 from .logger import logger
 
 
@@ -50,13 +50,15 @@ class ServiceStatus:
         self.bind_service(SupportProtocol.SUPPORT_PROTOCOL[protocol](*args, **kw))
 
     def bind_service(self, service: BaseProtocol) -> None:
+        if service in self:
+            raise NameConflictError
         self.__bind_services.append(service)
 
     def unbind_service(self, unbind_service: Union[BaseProtocol, str]) -> None:
-        if isinstance(unbind_service, str):
-            unbind_service = self[unbind_service]
         if unbind_service not in self:
             raise KeyError
+        if isinstance(unbind_service, str):
+            unbind_service = self[unbind_service]
         self.__bind_services.pop(self.__bind_services.index(unbind_service))
 
     async def get_detect_result(self) -> Dict[str, bool]:

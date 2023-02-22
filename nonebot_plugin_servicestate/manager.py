@@ -66,14 +66,14 @@ class CommandManager:
                 )
             )
 
-    def bind_new_service(self, protocol: str, name: str, host: str) -> None:
-        if protocol not in SupportProtocol.get():
+    def bind_new_service(self, service: BaseProtocol) -> None:
+        if service.protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
-        if name in self.__service_status:
+        if service.name in self.__service_status:
             raise NameConflictError
-        if name in self.__service_status_group:
+        if service.name in self.__service_status_group:
             raise NameConflictError
-        self.__service_status.register_service(protocol=protocol, name=name, host=host)
+        self.__service_status.register_service(protocol=service.protocol, **service.__data)
 
     def unbind_service_by_name(self, name: Union[str, List[str]]) -> None:
         if isinstance(name, List):
@@ -102,6 +102,8 @@ class CommandManager:
         if name not in self.__service_status_group:
             raise NameNotFoundError
         for i in self.__service_status_group[name]:
+            if i.name in self.__service_status or i.name in self.__service_status_group:
+                raise NameConflictError
             self.__service_status.bind_service(i)
         self.__service_status_group.unbind_group(name)
 
