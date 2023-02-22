@@ -73,7 +73,7 @@ class CommandManager:
             raise NameConflictError
         if service.name in self.__service_status_group:
             raise NameConflictError
-        self.__service_status.register_service(protocol=service.protocol, **service.__data)
+        self.__service_status.register_service(**service.__data.dict())
 
     def unbind_service_by_name(self, name: Union[str, List[str]]) -> None:
         if isinstance(name, List):
