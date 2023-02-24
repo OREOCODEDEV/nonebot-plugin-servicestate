@@ -44,22 +44,26 @@ class ServiceStatus:
     def __len__(self) -> int:
         return len(self.__bind_services)
 
-    def register_service(self, protocol: str, *args, **kw):
+    def register_service(self, protocol: str, *args, **kw) -> BaseProtocol:
         if protocol not in SupportProtocol.get():
             raise ProtocolUnsopportError
-        self.bind_service(SupportProtocol.SUPPORT_PROTOCOL[protocol](*args, **kw))
+        target_instance = SupportProtocol.SUPPORT_PROTOCOL[protocol](*args, **kw)
+        self.bind_service(target_instance)
+        return target_instance
 
-    def bind_service(self, service: BaseProtocol) -> None:
+    def bind_service(self, service: BaseProtocol) -> BaseProtocol:
         if service in self:
             raise NameConflictError
         self.__bind_services.append(service)
+        return service
 
-    def unbind_service(self, unbind_service: Union[BaseProtocol, str]) -> None:
+    def unbind_service(self, unbind_service: Union[BaseProtocol, str]) -> BaseProtocol:
         if unbind_service not in self:
             raise KeyError
         if isinstance(unbind_service, str):
             unbind_service = self[unbind_service]
         self.__bind_services.pop(self.__bind_services.index(unbind_service))
+        return unbind_service
 
     async def get_detect_result(self) -> Dict[str, bool]:
         tasks = [service.detect() for service in self]
@@ -144,10 +148,12 @@ class ServiceStatusGroup:
         for this_service in services:
             self.__bind_services_group[name].bind_service(this_service)
 
-    def unbind_group(self, key: str) -> None:
+    def unbind_group(self, key: str) -> ServiceStatus:
         if key not in self:
             raise KeyError
+        temp_ret = self.__bind_services_group[key]
         del self.__bind_services_group[key]
+        return temp_ret
 
     async def get_detect_result(self) -> Dict[str, bool]:
         ret_result = {}

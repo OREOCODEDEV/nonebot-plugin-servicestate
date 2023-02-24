@@ -65,7 +65,11 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     name = command_arg_list[1]
     host = command_arg_list[2]
     try:
-        manager.bind_new_service(protocol, name, host)
+        name = Escharacter(command_arg_list[0])
+    except NameEscapeCharacterCountError:
+        await service_group_matcher.finish("操作失败：@ 转义符解析错误\n添加服务 <协议> <群组名>@<服务名> <地址>")
+    try:
+        manager.bind_new_service(protocol, name.auto_name, host)
     except ProtocolUnsopportError:
         await service_add_matcher.finish(f"暂不支持协议 \"{protocol}\" ！\n支持的协议： {'、'.join(SupportProtocol.get())}")
     except NameConflictError:
