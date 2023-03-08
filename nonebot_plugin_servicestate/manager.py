@@ -55,7 +55,7 @@ class CommandManager:
         }
         if not path.exists():
             logger.debug("Creating plugin folder")
-            path.parent.mkdir()
+            path.parent.mkdir(parents=True)
         with open(path, "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
