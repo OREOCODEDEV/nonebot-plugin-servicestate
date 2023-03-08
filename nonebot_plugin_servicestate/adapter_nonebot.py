@@ -65,7 +65,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     name = command_arg_list[1]
     host = command_arg_list[2]
     try:
-        name = Escharacter(command_arg_list[0])
+        name = Escharacter(command_arg_list[1])
     except NameEscapeCharacterCountError:
         await service_group_matcher.finish("操作失败：@ 转义符解析错误\n添加服务 <协议> <群组名>@<服务名> <地址>")
     try:

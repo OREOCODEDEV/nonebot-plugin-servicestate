@@ -34,4 +34,4 @@ class Escharacter:
 
     @property
     def auto_name(self) -> Union[str, List[str]]:
-        return self.__raw_content if self.is_group else self.__extract_content
+        return self.__extract_content if self.is_group else self.__raw_content
