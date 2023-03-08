@@ -15,7 +15,7 @@ def config_file_compatible_v011_lower():
     if service_count[0] != 0 or service_count[2] != 0:
         return
     logger.info("Checking compatible config...")
-    if not OLD_CONFIG_FILE_PATH.is_file:
+    if not OLD_CONFIG_FILE_PATH.is_file():
         logger.info("Unable to found compatible config file")
         return
     logger.info("Compatible config file found")
