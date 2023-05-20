@@ -5,7 +5,7 @@ from asyncio import gather
 
 from .protocol import BaseProtocol, SupportProtocol
 from .exception import ProtocolUnsopportError, NameConflictError
-from .logger import logger
+from nonebot.log import logger
 
 
 class ServiceStatus:
