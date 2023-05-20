@@ -7,8 +7,8 @@ class Escharacter:
         self.__raw_content = keywords
         self.__extract_content = list(
             map(
-                lambda i: i.replace("^_^", "@"),
-                keywords.replace("@@", "^_^").split("@"),
+                lambda i: i.replace("__BUTLTIN_ESCAPE_CHARACTER__", "@"),
+                keywords.replace("@@", "__BUTLTIN_ESCAPE_CHARACTER__").split("@"),
             )
         )
         self.is_group = False
