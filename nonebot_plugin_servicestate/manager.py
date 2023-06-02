@@ -19,7 +19,7 @@ from .exception import (
     ParamInvalidError,
 )
 
-plugin_config_file_path = Path(store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json"))
+PLUGIN_CONFIG_FILE_PATH = Path(store.get_data_file("nonebot-plugin-servicestate", "protocol_settings.json"))
 
 
 def modify_exception_recovery(func):
@@ -42,18 +42,18 @@ class CommandManager:
     def __init__(self) -> None:
         pass
 
-    def load(self, path: Path = plugin_config_file_path) -> None:
+    def load(self, path: Path = PLUGIN_CONFIG_FILE_PATH) -> None:
         with open(path, "r", encoding="utf-8") as f:
             load_dict = json.loads(f.read())
         self.__service_status = ServiceStatus.load(load_dict["service"])
         self.__service_status_group = ServiceStatusGroup.load(load_dict["service_group"])
 
-    def save(self, path: Path = plugin_config_file_path) -> None:
+    def save(self, path: Path = PLUGIN_CONFIG_FILE_PATH) -> None:
         save_dict = {
             "service": self.__service_status.export(),
             "service_group": self.__service_status_group.export(),
         }
-        if not path.exists():
+        if not path.parent.is_dir():
             logger.debug("Creating plugin folder")
             path.parent.mkdir(parents=True)
         with open(path, "w", encoding="utf-8") as f:
@@ -150,7 +150,7 @@ class CommandManager:
 
 
 manager = CommandManager()
-if not plugin_config_file_path.is_file():
+if not PLUGIN_CONFIG_FILE_PATH.is_file():
     logger.info("Creating config file")
     manager.save()
-manager.load(plugin_config_file_path)
+manager.load(PLUGIN_CONFIG_FILE_PATH)

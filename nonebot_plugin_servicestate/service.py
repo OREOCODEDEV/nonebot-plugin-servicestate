@@ -4,7 +4,7 @@ from typing import Union, Dict, List, Any, Tuple
 from asyncio import gather
 
 from .protocol import BaseProtocol, SupportProtocol
-from .exception import ProtocolUnsopportError, NameConflictError
+from .exception import ProtocolUnsopportError, NameConflictError,NameNotFoundError
 from nonebot.log import logger
 
 
@@ -32,14 +32,14 @@ class ServiceStatus:
         for i in self:
             if i == key:
                 return i
-        raise KeyError(key)
+        raise NameNotFoundError(key)
 
     def __setitem__(self, key: Union[str, BaseProtocol], value: BaseProtocol) -> None:
         for i, j in enumerate(self.__bind_services):
             if key == j:
                 self.__bind_services[i] = value
                 return
-        raise KeyError(key)
+        raise NameNotFoundError(key)
 
     def __len__(self) -> int:
         return len(self.__bind_services)
@@ -59,7 +59,7 @@ class ServiceStatus:
 
     def unbind_service(self, unbind_service: Union[BaseProtocol, str]) -> BaseProtocol:
         if unbind_service not in self:
-            raise KeyError
+            raise NameNotFoundError
         if isinstance(unbind_service, str):
             unbind_service = self[unbind_service]
         self.__bind_services.pop(self.__bind_services.index(unbind_service))
@@ -122,7 +122,7 @@ class ServiceStatusGroup:
         for i in self:
             if i == key:
                 return i
-        raise KeyError(key)
+        raise NameNotFoundError(key)
 
     def __setitem__(self, key: Union[str, ServiceStatus], value: ServiceStatus) -> None:
         if isinstance(key, str):
@@ -131,7 +131,7 @@ class ServiceStatusGroup:
             if key == j:
                 self.__bind_services_group[i] = value
                 return
-        raise KeyError(key)
+        raise NameNotFoundError (key)
 
     def __len__(self):
         return len(self.__bind_services_group)
@@ -150,7 +150,7 @@ class ServiceStatusGroup:
 
     def unbind_group(self, key: str) -> ServiceStatus:
         if key not in self:
-            raise KeyError
+            raise NameNotFoundError
         temp_ret = self.__bind_services_group[key]
         del self.__bind_services_group[key]
         return temp_ret
