@@ -5,6 +5,7 @@ from nonebot.plugin.on import on_command
 from nonebot.params import CommandArg, Depends
 from nonebot.adapters.onebot.v11 import Message
 from nonebot.permission import SUPERUSER
+from nonebot.plugin import PluginMetadata
 
 from nonebot.log import logger
 
@@ -18,6 +19,23 @@ from .exception import (
 )
 from .manager import manager
 from .utils import Escharacter
+
+__plugin_meta__ = PluginMetadata(
+    name="服务状态查询",
+    description="API服务状态监测",
+    usage="""\
+服务状态：查询API可用状态
+
+以下为管理员权限命令：
+添加服务 <协议> <名称> <地址>
+修改服务 <名称> <参数名> <参数内容>
+群组服务 <名称1> <名称2> <群组名称>
+解散群组 <群组名称>
+删除服务 <名称>
+""",
+    type="application",
+    homepage="https://github.com/OREOCODEDEV/nonebot-plugin-servicestate",
+)
 
 service_status_matcher = on_command("服务状态")
 
