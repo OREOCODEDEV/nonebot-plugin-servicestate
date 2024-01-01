@@ -117,7 +117,7 @@ async def _(command_arg_list: List[str] = Depends(extract_str_list)):
     await service_group_matcher.finish(f"已成功合并 {len(bind_service_name_list)} 个服务")
 
 
-service_ungroup_matcher = on_command("服务解散", aliases={"解散服务"}, permission=SUPERUSER)
+service_ungroup_matcher = on_command("服务解散", aliases={"解散服务", "解散群组"}, permission=SUPERUSER)
 
 
 @service_ungroup_matcher.handle()
